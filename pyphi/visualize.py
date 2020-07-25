@@ -48,6 +48,8 @@ def feature_matrix(ces, relations):
 
 
 def get_coords(data, y=None, n_components=3, **params):
+    if n_components >= data.shape[0] or n_components == 2:
+        params["init"] = "random"
     umap = UMAP(
         n_components=n_components,
         metric="euclidean",
@@ -133,7 +135,13 @@ def normalize_sizes(min_size, max_size, elements):
     phis = np.array([element.phi for element in elements])
     min_phi = phis.min()
     max_phi = phis.max()
-    return min_size + (((phis - min_phi) * (max_size - min_size)) / (max_phi - min_phi))
+    # Add exception in case all purviews have the same phi (e.g. monad case)
+    if max_phi == min_phi:
+        return [(min_size + max_size) / 2 for x in phis]
+    else:
+        return min_size + (
+            ((phis - min_phi) * (max_size - min_size)) / (max_phi - min_phi)
+        )
 
 
 def phi_round(phi):
@@ -159,10 +167,10 @@ def format_node(n, subsystem):
 def save_digraph(
     subsystem, digraph_filename="digraph.png", plot_digraph=False, layout="dot"
 ):
-
+    network = subsystem.network
     G = nx.DiGraph()
 
-    for n in range(subsystem.size):
+    for n in range(network.size):
         node_info = format_node(n, subsystem)
         G.add_node(
             node_info["label"],
@@ -171,7 +179,10 @@ def save_digraph(
             fontcolor=node_info["fontcolor"],
         )
 
-    edges = [subsystem.indices2nodes(indices) for indices in np.argwhere(subsystem.cm)]
+    edges = [
+        [format_node(i, subsystem)["label"] for i in n]
+        for n in np.argwhere(subsystem.cm)
+    ]
 
     G.add_edges_from(edges)
     G.graph["node"] = {"shape": "circle"}
@@ -206,6 +217,7 @@ def plot_ces(
     subsystem,
     ces,
     relations,
+    network=None,
     max_order=3,
     cause_effect_offset=(0.3, 0, 0),
     vertex_size_range=(10, 40),
@@ -221,14 +233,14 @@ def plot_ces(
     show_edges="legendonly",
     show_mesh="legendonly",
     show_node_qfolds=False,
-    show_mechanism_qfolds=True,
+    show_mechanism_qfolds="legendonly",
     show_grid=False,
     network_name="",
     eye_coordinates=(0.5, 0.5, 0.5),
     hovermode="x",
     digraph_filename="digraph.png",
     digraph_layout="dot",
-    save_plot_to_html=True,
+    save_plot_to_html=False,
     show_causal_model=True,
     order_on_z_axis=True,
 ):
@@ -318,7 +330,6 @@ def plot_ces(
         vertex_size_range[0], vertex_size_range[1], separated_ces
     )
     mechanism_sizes = [min(phis) for phis in chunk_list(purview_sizes, 2)]
-
     # Make mechanisms trace
     vertices_mechanisms_trace = go.Scatter3d(
         visible=show_vertices_mechanisms,
@@ -642,7 +653,7 @@ def plot_ces(
                 font=dict(color="black", size=15),
             )
         ),
-        autosize=False,
+        autosize=True,
         height=plot_dimentions[0],
         width=plot_dimentions[1],
     )
