@@ -2,6 +2,9 @@
 # coding: utf-8
 
 import itertools
+#import dash
+#import dash_html_components as html
+import base64
 
 import numpy as np
 import pandas as pd
@@ -11,6 +14,7 @@ from plotly import express as px
 from plotly import graph_objs as go
 from umap import UMAP
 from tqdm.notebook import tqdm
+import wx 
 
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout, to_agraph
@@ -18,6 +22,11 @@ from IPython.display import Image
 
 from pyphi import relations as rel
 
+
+def get_screen_size():
+    app = wx.App(False)
+    width, height = wx.GetDisplaySize()
+    return width, height
 
 def flatten(iterable):
     return itertools.chain.from_iterable(iterable)
@@ -195,18 +204,18 @@ def save_digraph(
 
 
 def get_edge_color(relation):
-    p0 = list(relation.relata.purviews)[0]
-    p1 = list(relation.relata.purviews)[1]
-    rp = relation.purview
+    purview0 = list(relation.relata.purviews)[0]
+    purview1 = list(relation.relata.purviews)[1]
+    relation_purview = relation.purview
     # Isotext (mutual full-overlap)
-    if p0 == p1 == rp:
+    if purview0 == purview1 == relation_purview:
         return "fuchsia"
     # Sub/Supertext (inclusion / full-overlap)
-    elif p0 != p1 and (all(n in p1 for n in p0) or all(n in p0 for n in p1)):
+    elif purview0 != purview1 and (all(n in purview1 for n in purview0) or all(n in purview0 for n in purview1)):
         return "indigo"
     # Paratext (connection / partial-overlap)
-    elif (p0 == p1 != rp) or (
-        any(n in p1 for n in p0) and not all(n in p1 for n in p0)
+    elif (purview0 == purview1 != relation_purview) or (
+        any(n in purview1 for n in purview0) and not all(n in purview1 for n in purview0)
     ):
         return "cyan"
     else:
@@ -240,7 +249,7 @@ def plot_ces(
     hovermode="x",
     digraph_filename="digraph.png",
     digraph_layout="dot",
-    save_plot_to_html=False,
+    save_plot_to_html=True,
     show_causal_model=True,
     order_on_z_axis=True,
 ):
@@ -296,7 +305,6 @@ def plot_ces(
 
     # Get mechanism and purview labels
     mechanism_labels = list(map(label_mechanism, ces))
-    mechanism_labels_x2 = list(map(label_mechanism, separated_ces))
     purview_labels = list(map(label_purview, separated_ces))
 
     mechanism_hovertext = list(map(hovertext_mechanism, ces))
@@ -481,6 +489,7 @@ def plot_ces(
                                 hoverinfo="text",
                                 hovertext=hovertext_relation(relation),
                             )
+                            
                             fig.add_trace(edge_two_relation_trace)
 
                             if mechanism_label not in legend_mechanisms:
@@ -654,8 +663,8 @@ def plot_ces(
             )
         ),
         autosize=True,
-        height=plot_dimentions[0],
-        width=plot_dimentions[1],
+        #height=1360*0.6,
+        #width=768*0.6,
     )
 
     # Apply layout
@@ -665,13 +674,14 @@ def plot_ces(
         # Create system image
         # TODO check why it doesn't show if you write the img to html
         save_digraph(subsystem, digraph_filename, layout=digraph_layout)
+        encoded_image = base64.b64encode(open(digraph_filename, 'rb').read())
         digraph_coords = (-0.35, 1)
         digraph_size = (0.3, 0.4)
 
         fig.add_layout_image(
             dict(
                 name="Causal model",
-                source=digraph_filename,
+                source='data:image/png;base64,{}'.format(encoded_image.decode()),
                 #         xref="paper", yref="paper",
                 x=digraph_coords[0],
                 y=digraph_coords[1],
@@ -681,6 +691,7 @@ def plot_ces(
                 yanchor="top",
             )
         )
+
 
         draft_template = go.layout.Template()
         draft_template.layout.annotations = [
@@ -698,6 +709,7 @@ def plot_ces(
                 showarrow=False,
             )
         ]
+
         fig.update_layout(
             margin=dict(l=400),
             template=draft_template,
@@ -706,5 +718,5 @@ def plot_ces(
 
     if save_plot_to_html:
         plotly.io.write_html(fig, f"{network_name}_CES.html")
-
+        fig.write_html("try.html")
     return fig
