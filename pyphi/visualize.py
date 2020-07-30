@@ -2,8 +2,6 @@
 # coding: utf-8
 
 import itertools
-#import dash
-#import dash_html_components as html
 import base64
 
 import numpy as np
@@ -663,8 +661,8 @@ def plot_ces(
             )
         ),
         autosize=True,
-        #height=1360*0.6,
-        #width=768*0.6,
+        #height=,
+        #width=,
     )
 
     # Apply layout
