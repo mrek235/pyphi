@@ -100,6 +100,10 @@ def label_state(mice):
     return [rel.maximal_state(mice)[0][node] for node in mice.purview]
 
 
+def label_purview_state(mice):
+    return "".join(str(x) for x in label_state(mice))
+
+
 def label_relation(relation):
     relata = relation.relata
 
@@ -230,7 +234,7 @@ def plot_ces(
     vertex_size_range=(10, 40),
     edge_size_range=(0.5, 4),
     surface_size_range=(0.005, 0.1),
-    plot_dimentions=(1000, 1600),
+    plot_dimentions=(800, 1000),
     mechanism_labels_size=20,
     purview_labels_size=15,
     show_mechanism_labels=True,
@@ -247,8 +251,8 @@ def plot_ces(
     hovermode="x",
     digraph_filename="digraph.png",
     digraph_layout="dot",
-    save_plot_to_html=True,
-    show_causal_model=True,
+    save_plot_to_html=False,
+    show_causal_model=False,
     order_on_z_axis=True,
 ):
     # Select only relations <= max_order
@@ -304,6 +308,7 @@ def plot_ces(
     # Get mechanism and purview labels
     mechanism_labels = list(map(label_mechanism, ces))
     purview_labels = list(map(label_purview, separated_ces))
+    purview_state_labels = list(map(label_purview_state, separated_ces))
 
     mechanism_hovertext = list(map(hovertext_mechanism, ces))
     vertices_hovertext = list(map(hovertext_purview, separated_ces))
@@ -370,6 +375,24 @@ def plot_ces(
         hoverlabel=dict(bgcolor=color),
     )
     fig.add_trace(labels_purviews_trace)
+
+    # Make purview state labels trace
+    color = list(flatten([("red", "green")] * len(ces)))
+    labels_purviews_state_trace = go.Scatter3d(
+        visible=show_purview_labels,
+        x=x,
+        y=y,
+        z=[n + (vertex_size_range[1] / 10 ** 3 + 0.05) for n in z],
+        mode="text",
+        text=purview_state_labels,
+        name="Purview State Labels",
+        showlegend=True,
+        textfont=dict(size=purview_labels_size - 5, color=color),
+        hoverinfo="text",
+        hovertext=vertices_hovertext,
+        hoverlabel=dict(bgcolor=color),
+    )
+    fig.add_trace(labels_purviews_state_trace)
 
     # Make purviews trace
     purview_phis = [purview.phi for purview in separated_ces]
