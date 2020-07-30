@@ -252,7 +252,7 @@ def plot_ces(
     digraph_filename="digraph.png",
     digraph_layout="dot",
     save_plot_to_html=False,
-    show_causal_model=False,
+    show_causal_model=True,
     order_on_z_axis=True,
 ):
     # Select only relations <= max_order
