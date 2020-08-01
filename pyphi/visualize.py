@@ -223,12 +223,52 @@ def get_edge_color(relation):
     else:
         raise ValueError("Unexpected relation type, check function to cover all cases")
 
+#This seperates cause and effect parts of features of purviews. For example, it separates labels, states, z-coordinates in the
+#original combined list. Normally purview lists are in the shape of [featureOfCause1,featureOfEffect1,featureOfCause2...]
+#by using this we can separate all those features into two lists, so that we can use them to show cause and effect purviews
+#separately in the CES plot. 
+
+#WARNING: This doesn't work for coordinates.
+
+def separate_cause_and_effect_purviews_for(given_list):
+    causes_in_given_list = []
+    effects_in_given_list = []
+
+    for i in range(len(given_list)):
+        if i % 2 == 0:
+            causes_in_given_list.append(given_list[i])
+        else:
+            effects_in_given_list.append(given_list[i])
+
+    return causes_in_given_list, effects_in_given_list
+
+#This separates the xy coordinates of purviews.Similar to above the features treated in the above function, 
+# the coordinates are given in a "[x of c1, y of c1], 
+# [x of e1,y of e1],..." fashion and  with this function we can separate them to x and y of cause and effect purviews.
+  
+def separate_cause_and_effect_for(coords):
+
+    causes_x = []
+    effects_x = []
+    causes_y = []
+    effects_y = []
+
+    for i in range(len(coords)):
+        if i % 2 == 0:
+            causes_x.append(coords[i][0])
+            causes_y.append(coords[i][1])
+        else:
+            effects_x.append(coords[i][0])
+            effects_y.append(coords[i][1])
+    
+    return causes_x, causes_y, effects_x, effects_y
+
 
 def plot_ces(
     subsystem,
     ces,
     relations,
-    network=None,
+    network=None, 
     max_order=3,
     cause_effect_offset=(0.3, 0, 0),
     vertex_size_range=(10, 40),
@@ -251,7 +291,7 @@ def plot_ces(
     hovermode="x",
     digraph_filename="digraph.png",
     digraph_layout="dot",
-    save_plot_to_html=False,
+    save_plot_to_html=True,
     show_causal_model=True,
     order_on_z_axis=True,
 ):
@@ -296,10 +336,17 @@ def plot_ces(
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Extract vertex indices for plotly
     x, y = coords[:, 0], coords[:, 1]
+
+    causes_x, causes_y, effects_x, effects_y = separate_cause_and_effect_for(coords)
+
     if order_on_z_axis:
         z = np.array([len(c.mechanism) for c in separated_ces])
     else:
         z = coords[:, 2]
+
+    #This separates z-coordinates of cause and effect purviews
+    causes_z, effects_z = separate_cause_and_effect_purviews_for(z)     
+    
 
     # Get node labels and indices for future use:
     node_labels = subsystem.node_labels
@@ -309,9 +356,13 @@ def plot_ces(
     mechanism_labels = list(map(label_mechanism, ces))
     purview_labels = list(map(label_purview, separated_ces))
     purview_state_labels = list(map(label_purview_state, separated_ces))
+    
+    cause_purview_labels, effect_purview_labels = separate_cause_and_effect_purviews_for(purview_labels)
+    cause_purview_state_labels, effect_purview_state_labels = separate_cause_and_effect_purviews_for(purview_state_labels)
 
     mechanism_hovertext = list(map(hovertext_mechanism, ces))
     vertices_hovertext = list(map(hovertext_purview, separated_ces))
+    causes_hovertext, effects_hovertext = separate_cause_and_effect_purviews_for(vertices_hovertext)
 
     # Make mechanism labels
     xm, ym, zm = (
@@ -340,6 +391,22 @@ def plot_ces(
     purview_sizes = normalize_sizes(
         vertex_size_range[0], vertex_size_range[1], separated_ces
     )
+
+    
+    #This is also for separating purviews, but their sizes. Probably not so wrong.
+    """ cause_purview_sizes = []
+    effect_purview_sizes = []
+    
+    for i in range(len(purview_sizes)):
+        if i % 2 == 0:
+            cause_purview_sizes.append(purview_sizes[i])
+        else:
+            effect_purview_sizes.append(purview_sizes[i]) """
+
+    cause_purview_sizes, effect_purview_sizes = separate_cause_and_effect_purviews_for(purview_sizes)
+
+
+
     mechanism_sizes = [min(phis) for phis in chunk_list(purview_sizes, 2)]
     # Make mechanisms trace
     vertices_mechanisms_trace = go.Scatter3d(
@@ -358,7 +425,7 @@ def plot_ces(
     )
     fig.add_trace(vertices_mechanisms_trace)
 
-    # Make purview labels trace
+    """ # Make purview labels trace
     color = list(flatten([("red", "green")] * len(ces)))
     labels_purviews_trace = go.Scatter3d(
         visible=show_purview_labels,
@@ -374,9 +441,43 @@ def plot_ces(
         hovertext=vertices_hovertext,
         hoverlabel=dict(bgcolor=color),
     )
-    fig.add_trace(labels_purviews_trace)
+    fig.add_trace(labels_purviews_trace) """
 
-    # Make purview state labels trace
+    # Make cause purview labels trace
+    labels_cause_purviews_trace = go.Scatter3d(
+        visible=show_purview_labels,
+        x=causes_x,
+        y=causes_y,
+        z=[n + (vertex_size_range[1] / 10 ** 3) for n in causes_z],
+        mode="text",
+        text=cause_purview_labels, 
+        name="Cause Purview Labels",
+        showlegend=True,
+        textfont=dict(size=purview_labels_size, color='red'),
+        hoverinfo="text",
+        hovertext=causes_hovertext,
+        hoverlabel=dict(bgcolor='red'),
+    )
+    fig.add_trace(labels_cause_purviews_trace)
+
+    # Make effect purview labels trace
+    labels_effect_purviews_trace = go.Scatter3d(
+        visible=show_purview_labels,
+        x=effects_x,
+        y=effects_y,
+        z=[n + (vertex_size_range[1] / 10 ** 3) for n in effects_z],
+        mode="text",
+        text= effect_purview_labels, 
+        name="Effect Purview Labels",
+        showlegend=True,
+        textfont=dict(size=purview_labels_size, color='green'),
+        hoverinfo="text",
+        hovertext=causes_hovertext,
+        hoverlabel=dict(bgcolor='green'),
+    )
+    fig.add_trace(labels_effect_purviews_trace)
+
+    """ # Make purview state labels trace
     color = list(flatten([("red", "green")] * len(ces)))
     labels_purviews_state_trace = go.Scatter3d(
         visible=show_purview_labels,
@@ -392,9 +493,43 @@ def plot_ces(
         hovertext=vertices_hovertext,
         hoverlabel=dict(bgcolor=color),
     )
-    fig.add_trace(labels_purviews_state_trace)
+    fig.add_trace(labels_purviews_state_trace) """
 
-    # Make purviews trace
+    # Make cause purviews state labels trace 
+    labels_cause_purviews_state_trace = go.Scatter3d(
+        visible=show_purview_labels,
+        x=causes_x,
+        y=causes_y,
+        z=[n + (vertex_size_range[1] / 10 ** 3 + 0.05) for n in causes_z],
+        mode="text",
+        text=cause_purview_state_labels,
+        name="Cause Purview State Labels",
+        showlegend=True,
+        textfont=dict(size=purview_labels_size - 5, color='red'),
+        hoverinfo="text",
+        hovertext=causes_hovertext,
+        hoverlabel=dict(bgcolor='red'),
+    )
+    fig.add_trace(labels_cause_purviews_state_trace)
+
+    # Make effect purviews state labels trace 
+    labels_effect_purviews_state_trace = go.Scatter3d(
+        visible=show_purview_labels,
+        x=effects_x,
+        y=effects_y,
+        z=[n + (vertex_size_range[1] / 10 ** 3 + 0.05) for n in effects_z],
+        mode="text",
+        text=effect_purview_state_labels,
+        name="Effect Purview State Labels",
+        showlegend=True,
+        textfont=dict(size=purview_labels_size - 5, color='green'),
+        hoverinfo="text",
+        hovertext=effects_hovertext,
+        hoverlabel=dict(bgcolor='green'),
+    )
+    fig.add_trace(labels_effect_purviews_state_trace)
+
+    """# Make purviews trace
     purview_phis = [purview.phi for purview in separated_ces]
     direction_labels = list(flatten([["Cause", "Effect"] for c in ces]))
     vertices_purviews_trace = go.Scatter3d(
@@ -411,7 +546,75 @@ def plot_ces(
         hovertext=vertices_hovertext,
         hoverlabel=dict(bgcolor=color),
     )
-    fig.add_trace(vertices_purviews_trace)
+    fig.add_trace(vertices_purviews_trace)  """
+
+
+    """     #TOY: Make purviews trace
+    purview_phis = [purview.phi for purview in separated_ces]
+    direction_labels = list(flatten([["Cause", "Effect"] for c in ces]))
+    vertices_purviews_trace = go.Scatter3d(
+        visible=show_vertices_purviews,
+        x=x,
+        y=y,
+        z=z,
+        mode="markers",
+        name="Purviews",
+        text=purview_labels,
+        showlegend=True,
+        marker=dict(size=purview_sizes, color=color),
+        hoverinfo="text",
+        hovertext=vertices_hovertext,
+        hoverlabel=dict(bgcolor=color),
+    )
+    fig.add_trace(vertices_purviews_trace) """
+
+    #Separating purview traces
+    
+    purview_phis = [purview.phi for purview in separated_ces]
+    cause_purview_phis = []
+    effect_purview_phis = []
+    
+    for i in range(len(purview_phis)):
+        if i % 2 == 0:
+            cause_purview_phis.append(purview_phis[i])
+        else:
+            effect_purview_phis.append(purview_phis[i])
+
+    
+    #direction_labels = list(flatten([["Cause", "Effect"] for c in ces]))
+    vertices_cause_purviews_trace = go.Scatter3d(
+        visible=show_vertices_purviews,
+        x=causes_x,
+        y=causes_y,
+        z=causes_z,
+        mode="markers",
+        name="Cause Purviews",
+        text=purview_labels,
+        showlegend=True,
+        marker=dict(size=cause_purview_sizes, color='red'),
+        hoverinfo="text",
+        hovertext=causes_hovertext,
+        hoverlabel=dict(bgcolor='red'),
+    )
+    fig.add_trace(vertices_cause_purviews_trace)
+
+    vertices_effect_purviews_trace = go.Scatter3d(
+        visible=show_vertices_purviews,
+        x=effects_x,
+        y=effects_y,
+        z=effects_z,
+        mode="markers",
+        name="Effect Purviews",
+        text=purview_labels,
+        showlegend=True,
+        marker=dict(size=effect_purview_sizes, color='green'),
+        hoverinfo="text",
+        hovertext=effects_hovertext,
+        hoverlabel=dict(bgcolor='green'),
+    )
+    fig.add_trace(vertices_effect_purviews_trace)
+ 
+
 
     # Initialize lists for legend
     legend_nodes = []
