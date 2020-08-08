@@ -293,7 +293,7 @@ def plot_ces(
     vertex_size_range=(10, 40),
     edge_size_range=(0.5, 4),
     surface_size_range=(0.005, 0.1),
-    plot_dimentions=(800, 1000),
+    plot_dimentions=(768, 1366),
     mechanism_labels_size=15,
     state_labels_size=10,
     purview_labels_size=12,
@@ -307,17 +307,22 @@ def plot_ces(
     show_mechanism_qfolds="legendonly",
     show_grid=False,
     network_name="",
+    plot_title_size=20,
     eye_coordinates=(0.5, 0.5, 0.5),
     hovermode="x",
     digraph_filename="digraph.png",
     digraph_layout="dot",
-    digraph_coords=(-0.35, 1),
+    digraph_coords=(0, 1),
     digraph_size=(0.2, 0.3),
     save_plot_to_html=True,
     show_causal_model=True,
     order_on_z_axis=True,
     colorcode_2_relations=True,
     state_label_z_offset=0.1,
+    left_margin=100,
+    legend_title_size=12,
+    legend_font_size=10,
+    autosize=False,
 ):
     # Select only relations <= max_order
     relations = list(filter(lambda r: len(r.relata) <= max_order, relations))
@@ -858,14 +863,15 @@ def plot_ces(
         ),
         hovermode=hovermode,
         title=f"{network_name} Q-Structure",
-        title_font_size=30,
+        title_font_size=plot_title_size,
         legend=dict(
             title=dict(
                 text="Trace legend (click trace to show/hide):",
-                font=dict(color="black", size=15),
-            )
+                font=dict(color="black", size=legend_title_size),
+            ),
+            font_size=legend_font_size,
         ),
-        autosize=True,
+        autosize=autosize,
         height=plot_dimentions[0],
         width=plot_dimentions[1],
     )
@@ -898,7 +904,7 @@ def plot_ces(
                 name="Causal model",
                 text="Causal model",
                 opacity=1,
-                font=dict(color="black", size=20),
+                font=dict(color="black", size=plot_title_size),
                 xref="paper",
                 yref="paper",
                 x=digraph_coords[0],
@@ -910,7 +916,7 @@ def plot_ces(
         ]
 
         fig.update_layout(
-            margin=dict(l=400),
+            margin=dict(l=left_margin),
             template=draft_template,
             annotations=[dict(templateitemname="Causal model", visible=True)],
         )
