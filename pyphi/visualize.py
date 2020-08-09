@@ -56,26 +56,29 @@ def feature_matrix(ces, relations):
 
 def get_coords(data, y=None, n_components=3, **params):
     
-    coords = np.zeros((len(data),2))
-    if n_components == 2:
-         for i in range(len(data)):
-           coords[i][0] = i* 0.25
+    print(n_components)
+    
+    """ if n_components <= 2:
+        coords = np.zeros((len(data),2))
+        for i in range(len(data)):
+           coords[i][0] = i* 0.5
            coords[i][1] = i*0.5
 
-    elif n_components >= data.shape[0]:
+    else:  """
+    
+    if n_components >= data.shape[0]:
         params["init"] = "random"
     
-    else:
-        umap = UMAP(
-        n_components=n_components,
-        metric="euclidean",
-        n_neighbors=30,
-        min_dist=0.5,
-        **params,
-    )
-        coords = umap.fit_transform(data, y = y)
     
-    print(type(coords))
+    umap = UMAP(
+            n_components=n_components,
+            metric="euclidean",
+            n_neighbors=30,
+            min_dist=0.5,
+            **params,
+        )
+    coords = umap.fit_transform(data, y = y)
+        
     return coords
 
 
@@ -323,7 +326,7 @@ def plot_ces(
     show_mesh="legendonly",
     show_node_qfolds=False,
     show_mechanism_qfolds="legendonly",
-    show_purview_qfolds = True,
+    show_relation_purview_qfolds = True,
     show_grid=False,
     network_name="",
     eye_coordinates=(0.5, 0.5, 0.5),
@@ -619,6 +622,7 @@ def plot_ces(
         else:
             effect_purview_phis.append(purview_phis[i])
 
+    cause_purview_phis, effect_purview_phis = separate_cause_and_effect_purviews_for(purview_phis)
     
     #direction_labels = list(flatten([["Cause", "Effect"] for c in ces]))
     vertices_cause_purviews_trace = go.Scatter3d(
@@ -770,8 +774,8 @@ def plot_ces(
                 # Make purview contexts traces and legendgroups
                 #This implementation is based on the fact that all the necessary computations for the purviews and relations
                 #were also made above. It would have been much better if I had used functionalities of PyPhi itself. OC
-
-                if show_purview_qfolds:
+                #TODO fix index problems
+                if show_relation_purview_qfolds:
                     
                     
                     for purview_group in indexes_of_two_relations_grouped_by_purview:
