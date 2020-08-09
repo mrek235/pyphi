@@ -963,6 +963,38 @@ def plot_ces(
                             fig.add_trace(triangle_three_relation_trace)
                             if mechanism_label not in legend_mechanisms:
                                 legend_mechanisms.append(mechanism_label)
+                
+                if show_compound_purview_qfolds:
+                    purviews = list(relation.relata.purviews)
+                    
+                    for purview in purviews:
+                        
+                        purview_label = make_label(purview, node_labels)
+                        edge_compound_purview_three_relation_trace = go.Mesh3d(
+                            visible=show_edges,
+                            legendgroup=f"Compound Purview {purview_label} q-fold",
+                            showlegend=True
+                            if purview_label not in legend_purviews
+                            else False,
+                            x=x,
+                            y=y,
+                            z=z,
+                            i=[i[r]],
+                            j=[j[r]],
+                            k=[k[r]],
+                            intensity=np.linspace(0, 1, len(x), endpoint=True),
+                            opacity=three_relations_sizes[r],
+                            colorscale="viridis",
+                            showscale=False,
+                            name=f"Compound Purview {purview_label} q-fold",
+                            hoverinfo="text",
+                            hovertext=hovertext_relation(relation),
+                        )
+                        
+                        fig.add_trace(edge_compound_purview_three_relation_trace)
+    
+                        if purview_label not in legend_purviews:
+                            legend_purviews.append(purview_label)
 
                 triangle_three_relation_trace = go.Mesh3d(
                     visible=show_mesh,
