@@ -996,6 +996,36 @@ def plot_ces(
                         if purview_label not in legend_purviews:
                             legend_purviews.append(purview_label)
 
+                if show_relation_purview_qfolds:
+                    purview = relation.purview
+                    purview_label = make_label(purview, node_labels)
+                    
+                    edge_relation_purview_three_relation_trace = go.Mesh3d(
+                        visible=show_edges,
+                        legendgroup=f"Relation Purview {purview_label} q-fold",
+                        showlegend=True
+                        if purview_label not in legend_relation_purviews
+                        else False,
+                        x=x,
+                        y=y,
+                        z=z,
+                        i=[i[r]],
+                        j=[j[r]],
+                        k=[k[r]],
+                        intensity=np.linspace(0, 1, len(x), endpoint=True),
+                        opacity=three_relations_sizes[r],
+                        colorscale="viridis",
+                        showscale=False,
+                        name=f"Relation Purview {purview_label} q-fold",
+                        hoverinfo="text",
+                        hovertext=hovertext_relation(relation),
+                    )
+                    
+                    fig.add_trace(edge_relation_purview_three_relation_trace)
+
+                    if purview_label not in legend_relation_purviews:
+                        legend_relation_purviews.append(purview_label)
+
                 triangle_three_relation_trace = go.Mesh3d(
                     visible=show_mesh,
                     legendgroup="All 3-Relations",
