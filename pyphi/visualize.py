@@ -56,7 +56,6 @@ def feature_matrix(ces, relations):
 
 def get_coords(data, y=None, n_components=3, **params):
     
-    print(n_components)
     
     """ if n_components <= 2:
         coords = np.zeros((len(data),2))
@@ -601,8 +600,7 @@ def plot_ces(
             two_relations_grouped_and_indexed = purview_chunker(two_relations)
             two_relations_grouped_by_purview = two_relations_grouped_and_indexed[0]
             indexes_of_two_relations_grouped_by_purview = two_relations_grouped_and_indexed[1]
-            print(indexes_of_two_relations_grouped_by_purview)
-            print(len(two_relations_grouped_by_purview))
+            
 
             two_relations_sizes = normalize_sizes(
                 edge_size_range[0], edge_size_range[1], two_relations
@@ -778,12 +776,7 @@ def plot_ces(
                     #THIS PART IS TO BE FIXED. IT DOESN'T WORK.
                     #This is wrong. Don't do this.
                     
-                    #Get relation
-                    #Get mechanisms of the relation
-                    #Find mechanisms in CES
-                    #Put the cause purviews of the mechanisms in an array
-                    #If the cause purview is the purview in relata add to the legend group with the proper name
-                    
+            
                     mechanisms = relation.mechanisms
                     mechanisms_list = [distinction.mechanism for distinction in ces]
                     cause_purviews = []
