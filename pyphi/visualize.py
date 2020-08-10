@@ -56,8 +56,18 @@ def feature_matrix(ces, relations):
 
 
 def get_coords(data, y=None, n_components=3, **params):
-    if n_components >= data.shape[0] or n_components == 2:
+
+    """ if n_components <= 2:
+        coords = np.zeros((len(data),2))
+        for i in range(len(data)):
+           coords[i][0] = i* 0.5
+           coords[i][1] = i*0.5
+
+    else:  """
+
+    if n_components >= data.shape[0]:
         params["init"] = "random"
+
     umap = UMAP(
         n_components=n_components,
         metric="euclidean",
@@ -65,7 +75,9 @@ def get_coords(data, y=None, n_components=3, **params):
         min_dist=0.5,
         **params,
     )
-    return umap.fit_transform(data, y=y)
+    coords = umap.fit_transform(data, y=y)
+
+    return coords
 
 
 def relation_vertex_indices(features, j):
@@ -282,6 +294,37 @@ def separate_cause_and_effect_for(coords):
     return causes_x, causes_y, effects_x, effects_y
 
 
+# This is an experiment for separating relations on purviews so that we can have purview q-folds.
+def purview_chunker(relations_list):
+    purview_chunked_list = []
+    purview_chunk = []
+    index_chunk_list = []
+    index_chunk = []
+    index_chunk.append(0)
+    previous_relation = relations_list[0]
+    purview_chunk.append(previous_relation)
+    for relation in relations_list:
+        if (
+            relation.mechanisms[0] == previous_relation.mechanisms[0]
+            and relation.purview == previous_relation.purview
+            and relation != previous_relation
+        ):
+            purview_chunk.append(relation)
+            index_chunk.append(relations_list.index(relation))
+        else:
+            purview_chunked_list.append(purview_chunk)
+            purview_chunk = []
+            purview_chunk.append(relation)
+
+            index_chunk_list.append(index_chunk)
+            index_chunk = []
+            index_chunk.append(relations_list.index(relation))
+
+        previous_relation = relation
+
+    return purview_chunked_list, index_chunk_list
+
+
 def plot_ces(
     subsystem,
     ces,
@@ -305,6 +348,9 @@ def plot_ces(
     show_mesh="legendonly",
     show_node_qfolds=False,
     show_mechanism_qfolds="legendonly",
+    show_compound_purview_qfolds=True,
+    show_relation_purview_qfolds=True,
+    show_cause_per_mechanism_purview_qfolds=True,
     show_grid=False,
     network_name="",
     plot_title_size=20,
@@ -457,8 +503,6 @@ def plot_ces(
         vertex_size_range[0], vertex_size_range[1], separated_ces
     )
 
-    # This is also for separating purviews, but their sizes. Probably not so wrong.
-
     cause_purview_sizes, effect_purview_sizes = separate_cause_and_effect_purviews_for(
         purview_sizes
     )
@@ -603,6 +647,9 @@ def plot_ces(
     # Initialize lists for legend
     legend_nodes = []
     legend_mechanisms = []
+    legend_purviews = []
+    legend_relation_purviews = []
+    legend_mechanism_cause_purviews = []
 
     # 2-relations
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -630,6 +677,12 @@ def plot_ces(
 
             # Plot edges separately:
             two_relations = list(filter(lambda r: len(r.relata) == 2, relations))
+            two_relations_grouped_and_indexed = purview_chunker(two_relations)
+            two_relations_grouped_by_purview = two_relations_grouped_and_indexed[0]
+            indexes_of_two_relations_grouped_by_purview = two_relations_grouped_and_indexed[
+                1
+            ]
+
             two_relations_sizes = normalize_sizes(
                 edge_size_range[0], edge_size_range[1], two_relations
             )
@@ -704,6 +757,146 @@ def plot_ces(
 
                                 legend_mechanisms.append(mechanism_label)
 
+                # Make compound purview contexts traces and legendgroups
+                if show_compound_purview_qfolds:
+                    purviews = list(relation.relata.purviews)
+
+                    for purview in purviews:
+
+                        purview_label = make_label(purview, node_labels)
+                        edge_compound_purview_two_relation_trace = go.Scatter3d(
+                            visible=show_edges,
+                            legendgroup=f"Compound Purview {purview_label} q-fold",
+                            showlegend=True
+                            if purview_label not in legend_purviews
+                            else False,
+                            x=two_relations_coords[0][r],
+                            y=two_relations_coords[1][r],
+                            z=two_relations_coords[2][r],
+                            mode="lines",
+                            name=f"Compound Purview {purview_label} q-fold",
+                            line_width=two_relations_sizes[r],
+                            line_color=relation_color,
+                            hoverinfo="text",
+                            hovertext=hovertext_relation(relation),
+                        )
+
+                        fig.add_trace(edge_compound_purview_two_relation_trace)
+
+                        if purview_label not in legend_purviews:
+                            legend_purviews.append(purview_label)
+
+                # Make relation purview contexts traces and legendgroups
+                if show_relation_purview_qfolds:
+
+                    # Just left this code to make sure if we need relation purviews for mechanisms. Probably not necessary anymore.
+                    """for purview_group in indexes_of_two_relations_grouped_by_purview:
+                        
+                        for purview_index in purview_group:
+                            index_in_group = purview_group.index(purview_index)
+                            purview = (two_relations_grouped_by_purview[indexes_of_two_relations_grouped_by_purview.index(purview_group)][index_in_group]).purview
+                            purview_label = make_label(purview, node_labels)
+                            first_mechanism = two_relations[purview_group[0]].mechanisms[0]
+                            first_mechanism_label = make_label(first_mechanism, node_labels)
+                            
+                            
+                        
+                            purview_group_index = indexes_of_two_relations_grouped_by_purview.index(purview_group)
+                            whole_label = purview_label + mechanism_label + str(purview_group_index)
+                            edge_two_relation_purview_trace = go.Scatter3d(
+                                visible=show_edges,
+                                legendgroup=f"Mechanism {first_mechanism_label} Relation Purview {purview_label} q-fold {purview_group_index}",
+                                showlegend=True
+                                if whole_label not in legend_relation_purviews      
+                                else False,
+                                x=two_relations_coords[0][purview_index],
+                                y=two_relations_coords[1][purview_index],
+                                z=two_relations_coords[2][purview_index],
+                                mode="lines",
+                                name=f"Mechanism {first_mechanism_label} Relation Purview {purview_label} q-fold {purview_group_index}",
+                                line_width=two_relations_sizes[purview_index],
+                                line_color=relation_color,
+                                hoverinfo="text",
+                                hovertext=hovertext_relation(two_relations[purview_index]),
+                            )
+                                
+                            fig.add_trace(edge_two_relation_purview_trace)
+                        
+                            if whole_label not in legend_relation_purviews:
+
+                                legend_relation_purviews.append(whole_label)"""
+
+                    purview = relation.purview
+                    purview_label = make_label(purview, node_labels)
+
+                    edge_relation_purview_two_relation_trace = go.Scatter3d(
+                        visible=show_edges,
+                        legendgroup=f"Relation Purview {purview_label} q-fold",
+                        showlegend=True
+                        if purview_label not in legend_relation_purviews
+                        else False,
+                        x=two_relations_coords[0][r],
+                        y=two_relations_coords[1][r],
+                        z=two_relations_coords[2][r],
+                        mode="lines",
+                        name=f"Relation Purview {purview_label} q-fold",
+                        line_width=two_relations_sizes[r],
+                        line_color=relation_color,
+                        hoverinfo="text",
+                        hovertext=hovertext_relation(relation),
+                    )
+
+                    fig.add_trace(edge_relation_purview_two_relation_trace)
+
+                    if purview_label not in legend_relation_purviews:
+                        legend_relation_purviews.append(purview_label)
+
+                # Make cause/effect purview per mechanism contexts traces and legendgroups
+                if show_cause_per_mechanism_purview_qfolds:
+                    # THIS PART IS TO BE FIXED. IT DOESN'T WORK.
+                    # This is wrong. Don't do this.
+
+                    distinctions_list = [distinction for distinction in ces]
+                    for distinction in distinctions_list:
+                        cause_purview = distinction.cause_purview
+                        mechanism = distinction.mechanism
+                        purview_label = make_label(cause_purview, node_labels)
+                        mechanism_label = make_label(mechanism, node_labels)
+                        mechanism_cause_purview_label = f"Mechanism {mechanism_label} Cause Purview {purview_label} q-fold"
+                        if (
+                            cause_purview in relation.relata.purviews
+                            and mechanism in relation.mechanisms
+                        ):
+
+                            edge_cause_purviews_with_mechanisms_two_relation_trace = go.Scatter3d(
+                                visible=show_edges,
+                                legendgroup=mechanism_cause_purview_label,
+                                showlegend=True
+                                if mechanism_cause_purview_label
+                                not in legend_mechanism_cause_purviews
+                                else False,
+                                x=two_relations_coords[0][r],
+                                y=two_relations_coords[1][r],
+                                z=two_relations_coords[2][r],
+                                mode="lines",
+                                name=mechanism_cause_purview_label,
+                                line_width=two_relations_sizes[r],
+                                line_color=relation_color,
+                                hoverinfo="text",
+                                hovertext=hovertext_relation(relation),
+                            )
+
+                            fig.add_trace(
+                                edge_cause_purviews_with_mechanisms_two_relation_trace
+                            )
+
+                            if (
+                                mechanism_cause_purview_label
+                                not in legend_mechanism_cause_purviews
+                            ):
+                                legend_mechanism_cause_purviews.append(
+                                    mechanism_cause_purview_label
+                                )
                 # Make all 2-relations traces and legendgroup
                 edge_two_relation_trace = go.Scatter3d(
                     visible=show_edges,
@@ -808,6 +1001,68 @@ def plot_ces(
                             fig.add_trace(triangle_three_relation_trace)
                             if mechanism_label not in legend_mechanisms:
                                 legend_mechanisms.append(mechanism_label)
+
+                if show_compound_purview_qfolds:
+                    purviews = list(relation.relata.purviews)
+
+                    for purview in purviews:
+
+                        purview_label = make_label(purview, node_labels)
+                        edge_compound_purview_three_relation_trace = go.Mesh3d(
+                            visible=show_edges,
+                            legendgroup=f"Compound Purview {purview_label} q-fold",
+                            showlegend=True
+                            if purview_label not in legend_purviews
+                            else False,
+                            x=x,
+                            y=y,
+                            z=z,
+                            i=[i[r]],
+                            j=[j[r]],
+                            k=[k[r]],
+                            intensity=np.linspace(0, 1, len(x), endpoint=True),
+                            opacity=three_relations_sizes[r],
+                            colorscale="viridis",
+                            showscale=False,
+                            name=f"Compound Purview {purview_label} q-fold",
+                            hoverinfo="text",
+                            hovertext=hovertext_relation(relation),
+                        )
+
+                        fig.add_trace(edge_compound_purview_three_relation_trace)
+
+                        if purview_label not in legend_purviews:
+                            legend_purviews.append(purview_label)
+
+                if show_relation_purview_qfolds:
+                    purview = relation.purview
+                    purview_label = make_label(purview, node_labels)
+
+                    edge_relation_purview_three_relation_trace = go.Mesh3d(
+                        visible=show_edges,
+                        legendgroup=f"Relation Purview {purview_label} q-fold",
+                        showlegend=True
+                        if purview_label not in legend_relation_purviews
+                        else False,
+                        x=x,
+                        y=y,
+                        z=z,
+                        i=[i[r]],
+                        j=[j[r]],
+                        k=[k[r]],
+                        intensity=np.linspace(0, 1, len(x), endpoint=True),
+                        opacity=three_relations_sizes[r],
+                        colorscale="viridis",
+                        showscale=False,
+                        name=f"Relation Purview {purview_label} q-fold",
+                        hoverinfo="text",
+                        hovertext=hovertext_relation(relation),
+                    )
+
+                    fig.add_trace(edge_relation_purview_three_relation_trace)
+
+                    if purview_label not in legend_relation_purviews:
+                        legend_relation_purviews.append(purview_label)
 
                 triangle_three_relation_trace = go.Mesh3d(
                     visible=show_mesh,
