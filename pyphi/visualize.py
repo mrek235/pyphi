@@ -327,7 +327,7 @@ def plot_ces(
     show_mechanism_qfolds="legendonly",
     show_compound_purview_qfolds = True,
     show_relation_purview_qfolds = True,
-    show_cause_per_mechanism_purview_qfolds = False,
+    show_cause_per_mechanism_purview_qfolds = True,
     show_grid=False,
     network_name="",
     eye_coordinates=(0.5, 0.5, 0.5),
@@ -776,30 +776,18 @@ def plot_ces(
                     #THIS PART IS TO BE FIXED. IT DOESN'T WORK.
                     #This is wrong. Don't do this.
                     
-            
-                    mechanisms = relation.mechanisms
-                    mechanisms_list = [distinction.mechanism for distinction in ces]
-                    cause_purviews = []
-                    relata_purviews = relation.relata.purviews
-                    
-                    
-                    for mechanism in mechanisms:
-                        index_of_mechanism_in_ces = mechanisms_list.index(mechanism)
-                        cause_purviews.append(ces[index_of_mechanism_in_ces].cause_purview)
+                    distinctions_list = [distinction for distinction in ces]
+                    for distinction in distinctions_list:
+                        cause_purview = distinction.cause_purview
+                        mechanism = distinction.mechanism
+                        purview_label = make_label(cause_purview, node_labels)
+                        mechanism_label = make_label(mechanism, node_labels)
+                        mechanism_cause_purview_label = f"Mechanism {mechanism_label} Cause Purview {purview_label} q-fold"
+                        if cause_purview in relation.relata.purviews and mechanism in relation.mechanisms:
 
-                    mechanism_and_purview_labels = []
-                    for cause_purview in cause_purviews:
-                        purview_label = make_label(cause_purview,node_labels)
-                        mechanism_label = make_label(mechanisms[cause_purviews.index(cause_purview)],node_labels)
-                        mechanism_and_purview_label = f"Mechanism {mechanism_label} Purview {purview_label} q-fold"
-                        mechanism_and_purview_labels.append(mechanism_and_purview_label)
-
-                    for purview in cause_purviews:
-                            index = cause_purviews.index(purview)
-                            mechanism_cause_purview_label = mechanism_and_purview_labels[index]
-                            edge_compound_purview_two_relation_trace = go.Scatter3d(
+                            edge_cause_purviews_with_mechanisms_two_relation_trace = go.Scatter3d(
                                 visible=show_edges,
-                                legendgroup=mechanism_cause_purview_label,
+                                legendgroup= mechanism_cause_purview_label,
                                 showlegend=True
                                 if mechanism_cause_purview_label not in legend_mechanism_cause_purviews
                                 else False,
@@ -814,7 +802,7 @@ def plot_ces(
                                 hovertext=hovertext_relation(relation),
                             )
                             
-                            fig.add_trace(edge_compound_purview_two_relation_trace)
+                            fig.add_trace(edge_cause_purviews_with_mechanisms_two_relation_trace)
         
                             if mechanism_cause_purview_label not in legend_mechanism_cause_purviews:
                                 legend_mechanism_cause_purviews.append(mechanism_cause_purview_label)
