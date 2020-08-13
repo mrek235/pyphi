@@ -879,7 +879,7 @@ def plot_ces(
                     for purview in purviews:
                         
                         purview_label = make_label(purview, node_labels)
-                        edge_compound_purview_three_relation_trace = go.Mesh3d(
+                        compound_purview_three_relation_trace = go.Mesh3d(
                             visible=show_edges,
                             legendgroup=f"Compound Purview {purview_label} q-fold",
                             showlegend=True
@@ -900,7 +900,7 @@ def plot_ces(
                             hovertext=hovertext_relation(relation),
                         )
                         
-                        fig.add_trace(edge_compound_purview_three_relation_trace)
+                        fig.add_trace(compound_purview_three_relation_trace)
     
                         if purview_label not in legend_purviews:
                             legend_purviews.append(purview_label)
@@ -909,7 +909,7 @@ def plot_ces(
                     purview = relation.purview
                     purview_label = make_label(purview, node_labels)
                     
-                    edge_relation_purview_three_relation_trace = go.Mesh3d(
+                    relation_purview_three_relation_trace = go.Mesh3d(
                         visible=show_edges,
                         legendgroup=f"Relation Purview {purview_label} q-fold",
                         showlegend=True
@@ -930,7 +930,7 @@ def plot_ces(
                         hovertext=hovertext_relation(relation),
                     )
                     
-                    fig.add_trace(edge_relation_purview_three_relation_trace)
+                    fig.add_trace(relation_purview_three_relation_trace)
 
                     if purview_label not in legend_relation_purviews:
                         legend_relation_purviews.append(purview_label)
@@ -946,7 +946,7 @@ def plot_ces(
                     mechanism_purview_label = f"Mechanism {mechanism_label} {direction} Purview {purview_label} q-fold"
                     
                     
-                    edge_purviews_with_mechanisms_three_relation_trace = go.Mesh3d(
+                    purviews_with_mechanisms_three_relation_trace = go.Mesh3d(
                         visible=show_edges,
                         legendgroup= mechanism_purview_label,
                         showlegend=True
@@ -967,7 +967,7 @@ def plot_ces(
                         hovertext=hovertext_relation(relation),
                     )
                     
-                    fig.add_trace(edge_purviews_with_mechanisms_three_relation_trace)
+                    fig.add_trace(purviews_with_mechanisms_three_relation_trace)
 
                     if mechanism_purview_label not in legend_mechanism_purviews:
                         legend_mechanism_purviews.append(mechanism_purview_label)
