@@ -277,33 +277,6 @@ def separate_cause_and_effect_for(coords):
     
     return causes_x, causes_y, effects_x, effects_y
 
-#This is an experiment for separating relations on purviews so that we can have purview q-folds.
-def purview_chunker(relations_list):
-    purview_chunked_list = []
-    purview_chunk = []
-    index_chunk_list = []
-    index_chunk = []
-    index_chunk.append(0)
-    previous_relation = relations_list[0]
-    purview_chunk.append(previous_relation)
-    for relation in relations_list:
-        if relation.mechanisms[0] == previous_relation.mechanisms[0] and relation.purview == previous_relation.purview and relation != previous_relation:
-            purview_chunk.append(relation)
-            index_chunk.append(relations_list.index(relation))
-        else:
-            purview_chunked_list.append(purview_chunk)
-            purview_chunk = []
-            purview_chunk.append(relation)
-            
-            index_chunk_list.append(index_chunk)
-            index_chunk = []
-            index_chunk.append(relations_list.index(relation))
-        
-        previous_relation = relation
-        
-    return purview_chunked_list,index_chunk_list
-
-
 def plot_ces(
     subsystem,
     ces,
@@ -444,7 +417,7 @@ def plot_ces(
         visible=show_vertices_mechanisms,
         x=xm,
         y=ym,
-        z=zm,
+        z=zm+0.1,
         mode="markers",
         name="Mechanisms",
         text=mechanism_labels,
@@ -495,7 +468,7 @@ def plot_ces(
         visible=show_purview_labels,
         x=causes_x,
         y=causes_y,
-        z=[n + (vertex_size_range[1] / 10 ** 3 + 0.15) for n in causes_z],
+        z=[n + (vertex_size_range[1] / 10 ** 3 + 0.1) for n in causes_z],
         mode="text",
         text=cause_purview_state_labels,
         name="Cause Purview State Labels",
@@ -512,7 +485,7 @@ def plot_ces(
         visible=show_purview_labels,
         x=effects_x,
         y=effects_y,
-        z=[n + (vertex_size_range[1] / 10 ** 3 + 0.15) for n in effects_z],
+        z=[n + (vertex_size_range[1] / 10 ** 3 + 0.1) for n in effects_z],
         mode="text",
         text=effect_purview_state_labels,
         name="Effect Purview State Labels",
@@ -597,11 +570,7 @@ def plot_ces(
 
             # Plot edges separately:
             two_relations = list(filter(lambda r: len(r.relata) == 2, relations))
-            two_relations_grouped_and_indexed = purview_chunker(two_relations)
-            two_relations_grouped_by_purview = two_relations_grouped_and_indexed[0]
-            indexes_of_two_relations_grouped_by_purview = two_relations_grouped_and_indexed[1]
-            
-
+        
             two_relations_sizes = normalize_sizes(
                 edge_size_range[0], edge_size_range[1], two_relations
             )
