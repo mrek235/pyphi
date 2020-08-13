@@ -114,6 +114,11 @@ def label_state(mice):
     return [rel.maximal_state(mice)[0][node] for node in mice.purview]
 
 
+def label_mechanism_state(subsystem, distinction):
+    mechanism_state = [subsystem.state[node] for node in distinction.mechanism]
+    return "".join(str(node) for node in mechanism_state)
+
+
 def label_purview_state(mice):
     return "".join(str(x) for x in label_state(mice))
 
@@ -297,8 +302,12 @@ def plot_ces(
     edge_size_range=(0.5, 4),
     surface_size_range=(0.005, 0.1),
     plot_dimentions=(800, 1000),
-    mechanism_labels_size=20,
-    purview_labels_size=15,
+    mechanism_labels_size=12,
+    mechanism_state_labels_size=10,
+    labels_z_offset=0.15,
+    states_z_offset=0.15,
+    purview_labels_size=10,
+    purview_state_labels_size=8,
     show_mechanism_labels=True,
     show_purview_labels="legendonly",
     show_vertices_mechanisms=True,
@@ -384,6 +393,9 @@ def plot_ces(
 
     # Get mechanism and purview labels
     mechanism_labels = list(map(label_mechanism, ces))
+    mechanism_state_labels = [
+        label_mechanism_state(subsystem, distinction) for distinction in ces
+    ]
     purview_labels = list(map(label_purview, separated_ces))
     purview_state_labels = list(map(label_purview_state, separated_ces))
 
@@ -413,7 +425,7 @@ def plot_ces(
         visible=show_mechanism_labels,
         x=xm,
         y=ym,
-        z=[n + (vertex_size_range[1] / 10 ** 3) for n in zm],
+        z=[n + (vertex_size_range[1] / 10 ** 3 + labels_z_offset) for n in zm],
         mode="text",
         text=mechanism_labels,
         name="Mechanism Labels",
@@ -424,6 +436,26 @@ def plot_ces(
         hoverlabel=dict(bgcolor="black", font_color="white"),
     )
     fig.add_trace(labels_mechanisms_trace)
+
+    # Make mechanism state labels trace
+    labels_mechanisms_state_trace = go.Scatter3d(
+        visible=show_mechanism_labels,
+        x=xm,
+        y=ym,
+        z=[
+            n + (vertex_size_range[1] / 10 ** 3 + labels_z_offset + states_z_offset)
+            for n in zm
+        ],
+        mode="text",
+        text=mechanism_state_labels,
+        name="Mechanism State Labels",
+        showlegend=True,
+        textfont=dict(size=mechanism_state_labels_size, color="black"),
+        hoverinfo="text",
+        hovertext=mechanism_hovertext,
+        hoverlabel=dict(bgcolor="black", font_color="white"),
+    )
+    fig.add_trace(labels_mechanisms_state_trace)
 
     # Compute purview and mechanism marker sizes
     purview_sizes = normalize_sizes(
@@ -457,7 +489,7 @@ def plot_ces(
         visible=show_purview_labels,
         x=causes_x,
         y=causes_y,
-        z=[n + (vertex_size_range[1] / 10 ** 3) for n in causes_z],
+        z=[n + (vertex_size_range[1] / 10 ** 3 + labels_z_offset) for n in causes_z],
         mode="text",
         text=cause_purview_labels,
         name="Cause Purview Labels",
@@ -474,7 +506,7 @@ def plot_ces(
         visible=show_purview_labels,
         x=effects_x,
         y=effects_y,
-        z=[n + (vertex_size_range[1] / 10 ** 3) for n in effects_z],
+        z=[n + (vertex_size_range[1] / 10 ** 3 + labels_z_offset) for n in effects_z],
         mode="text",
         text=effect_purview_labels,
         name="Effect Purview Labels",
@@ -491,12 +523,15 @@ def plot_ces(
         visible=show_purview_labels,
         x=causes_x,
         y=causes_y,
-        z=[n + (vertex_size_range[1] / 10 ** 3 + 0.1) for n in causes_z],
+        z=[
+            n + (vertex_size_range[1] / 10 ** 3 + labels_z_offset + states_z_offset)
+            for n in causes_z
+        ],
         mode="text",
         text=cause_purview_state_labels,
         name="Cause Purview State Labels",
         showlegend=True,
-        textfont=dict(size=purview_labels_size - 5, color="red"),
+        textfont=dict(size=purview_state_labels_size, color="red"),
         hoverinfo="text",
         hovertext=causes_hovertext,
         hoverlabel=dict(bgcolor="red"),
@@ -508,12 +543,15 @@ def plot_ces(
         visible=show_purview_labels,
         x=effects_x,
         y=effects_y,
-        z=[n + (vertex_size_range[1] / 10 ** 3 + 0.1) for n in effects_z],
+        z=[
+            n + (vertex_size_range[1] / 10 ** 3 + labels_z_offset + states_z_offset)
+            for n in effects_z
+        ],
         mode="text",
         text=effect_purview_state_labels,
         name="Effect Purview State Labels",
         showlegend=True,
-        textfont=dict(size=purview_labels_size - 5, color="green"),
+        textfont=dict(size=purview_state_labels_size, color="green"),
         hoverinfo="text",
         hovertext=effects_hovertext,
         hoverlabel=dict(bgcolor="green"),
