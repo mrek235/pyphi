@@ -57,26 +57,26 @@ def feature_matrix(ces, relations):
 def get_coords(data, y=None, n_components=3, **params):
     
     
-    """ if n_components <= 2:
+    if len(data) <= 3:
         coords = np.zeros((len(data),2))
         for i in range(len(data)):
            coords[i][0] = i* 0.5
            coords[i][1] = i*0.5
 
-    else:  """
+    else: 
     
-    if n_components >= data.shape[0]:
-        params["init"] = "random"
-    
-    
-    umap = UMAP(
-            n_components=n_components,
-            metric="euclidean",
-            n_neighbors=30,
-            min_dist=0.5,
-            **params,
-        )
-    coords = umap.fit_transform(data, y = y)
+        if n_components >= data.shape[0]:
+            params["init"] = "random"
+        
+        
+        umap = UMAP(
+                n_components=n_components,
+                metric="euclidean",
+                n_neighbors=30,
+                min_dist=0.5,
+                **params,
+            )
+        coords = umap.fit_transform(data, y = y)
         
     return coords
 
@@ -495,7 +495,7 @@ def plot_ces(
         visible=show_purview_labels,
         x=causes_x,
         y=causes_y,
-        z=[n + (vertex_size_range[1] / 10 ** 3 + 0.05) for n in causes_z],
+        z=[n + (vertex_size_range[1] / 10 ** 3 + 0.15) for n in causes_z],
         mode="text",
         text=cause_purview_state_labels,
         name="Cause Purview State Labels",
@@ -512,7 +512,7 @@ def plot_ces(
         visible=show_purview_labels,
         x=effects_x,
         y=effects_y,
-        z=[n + (vertex_size_range[1] / 10 ** 3 + 0.05) for n in effects_z],
+        z=[n + (vertex_size_range[1] / 10 ** 3 + 0.15) for n in effects_z],
         mode="text",
         text=effect_purview_state_labels,
         name="Effect Purview State Labels",
