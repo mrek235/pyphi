@@ -329,6 +329,7 @@ def plot_ces(
     show_causal_model=True,
     order_on_z_axis=True,
     save_coords=False,
+    link_width=1.5,
 ):
     # Select only relations <= max_order
     relations = list(filter(lambda r: len(r.relata) <= max_order, relations))
@@ -418,7 +419,7 @@ def plot_ces(
     xm, ym, zm = (
         [c + cause_effect_offset[0] / 2 for c in x[::2]],
         y[::2],
-        z[::2],
+        [z + 0.1 for z in z[::2]],
         # [n + (vertex_size_range[1] / 10 ** 3) for n in z[::2]],
     )
     labels_mechanisms_trace = go.Scatter3d(
@@ -472,7 +473,7 @@ def plot_ces(
         visible=show_vertices_mechanisms,
         x=xm,
         y=ym,
-        z=zm + 0.1,
+        z=zm,
         mode="markers",
         name="Mechanisms",
         text=mechanism_labels,
@@ -604,6 +605,31 @@ def plot_ces(
     legend_purviews = []
     legend_relation_purviews = []
     legend_mechanism_purviews = []
+
+    # Plot distinction links (edge connecting cause, mechanism, effect vertices)
+    coords_links = (
+        list(zip(x, flatten(list(zip(xm, xm))))),
+        list(zip(y, flatten(list(zip(ym, ym))))),
+        list(zip(z, flatten(list(zip(zm, zm))))),
+    )
+
+    for i, distinction in enumerate(separated_ces):
+        link_trace = go.Scatter3d(
+            visible=show_vertices_mechanisms,
+            legendgroup="Links",
+            showlegend=False,
+            x=coords_links[0][i],
+            y=coords_links[1][i],
+            z=coords_links[2][i],
+            mode="lines",
+            name="Link",
+            line_width=link_width,
+            line_color="brown",
+            hoverinfo="skip",
+            # hovertext=hovertext_relation(relation),
+        )
+
+        fig.add_trace(link_trace)
 
     # 2-relations
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
