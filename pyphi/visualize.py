@@ -224,26 +224,31 @@ def save_digraph(
         return Image(digraph_filename)
 
 
-def get_edge_color(relation):
-    purview0 = list(relation.relata.purviews)[0]
-    purview1 = list(relation.relata.purviews)[1]
-    relation_purview = relation.purview
-    # Isotext (mutual full-overlap)
-    if purview0 == purview1 == relation_purview:
-        return "fuchsia"
-    # Sub/Supertext (inclusion / full-overlap)
-    elif purview0 != purview1 and (
-        all(n in purview1 for n in purview0) or all(n in purview0 for n in purview1)
-    ):
-        return "indigo"
-    # Paratext (connection / partial-overlap)
-    elif (purview0 == purview1 != relation_purview) or (
-        any(n in purview1 for n in purview0)
-        and not all(n in purview1 for n in purview0)
-    ):
-        return "cyan"
+def get_edge_color(relation, colorcode_2_relations):
+    if colorcode_2_relations:
+        purview0 = list(relation.relata.purviews)[0]
+        purview1 = list(relation.relata.purviews)[1]
+        relation_purview = relation.purview
+        # Isotext (mutual full-overlap)
+        if purview0 == purview1 == relation_purview:
+            return "fuchsia"
+        # Sub/Supertext (inclusion / full-overlap)
+        elif purview0 != purview1 and (
+            all(n in purview1 for n in purview0) or all(n in purview0 for n in purview1)
+        ):
+            return "indigo"
+        # Paratext (connection / partial-overlap)
+        elif (purview0 == purview1 != relation_purview) or (
+            any(n in purview1 for n in purview0)
+            and not all(n in purview1 for n in purview0)
+        ):
+            return "cyan"
+        else:
+            raise ValueError(
+                "Unexpected relation type, check function to cover all cases"
+            )
     else:
-        raise ValueError("Unexpected relation type, check function to cover all cases")
+        return "teal"
 
 
 # This seperates cause and effect parts of features of purviews. For example, it separates labels, states, z-coordinates in the
@@ -321,7 +326,7 @@ def plot_ces(
     show_per_mechanism_purview_qfolds=True,
     show_grid=False,
     network_name="",
-    eye_coordinates=(0.5, 0.5, 0.5),
+    eye_coordinates=(0.3, 0.3, 0.3),
     hovermode="x",
     digraph_filename="digraph.png",
     digraph_layout="dot",
@@ -330,6 +335,7 @@ def plot_ces(
     order_on_z_axis=True,
     save_coords=False,
     link_width=1.5,
+    colorcode_2_relations=True,
 ):
     # Select only relations <= max_order
     relations = list(filter(lambda r: len(r.relata) <= max_order, relations))
@@ -674,7 +680,7 @@ def plot_ces(
                 total=len(two_relations),
             ):
                 relation_nodes = list(flatten(relation.mechanisms))
-                relation_color = get_edge_color(relation)
+                relation_color = get_edge_color(relation, colorcode_2_relations)
 
                 # Make node contexts traces and legendgroups
                 if show_node_qfolds:
