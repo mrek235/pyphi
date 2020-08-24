@@ -336,6 +336,7 @@ def plot_ces(
     save_coords=False,
     link_width=1.5,
     colorcode_2_relations=True,
+    left_margin=400,
 ):
     # Select only relations <= max_order
     relations = list(filter(lambda r: len(r.relata) <= max_order, relations))
@@ -1138,7 +1139,7 @@ def plot_ces(
         ]
 
         fig.update_layout(
-            margin=dict(l=400),
+            margin_l=left_margin,
             template=draft_template,
             annotations=[dict(templateitemname="Causal model", visible=True)],
         )
