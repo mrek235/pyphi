@@ -798,35 +798,36 @@ def plot_ces(
 
                 # Make cause/effect purview per mechanism contexts traces and legendgroups
                 if show_per_mechanism_purview_qfolds:
-                    relatum = relation.relata[0]
-                    purview = relatum.purview
-                    mechanism = relatum.mechanism
-                    direction = str(relatum.direction)
-                    purview_label = make_label(purview, node_labels)
-                    mechanism_label = make_label(mechanism, node_labels)
-                    mechanism_purview_label = f"Mechanism {mechanism_label} {direction} Purview {purview_label} q-fold"
+                    
+                    for relatum in relation.relata:
+                        purview = relatum.purview
+                        mechanism = relatum.mechanism
+                        direction = str(relatum.direction)
+                        purview_label = make_label(purview, node_labels)
+                        mechanism_label = make_label(mechanism, node_labels)
+                        mechanism_purview_label = f"Mechanism {mechanism_label} {direction} Purview {purview_label} q-fold"
 
-                    edge_purviews_with_mechanisms_two_relation_trace = go.Scatter3d(
-                        visible=show_edges,
-                        legendgroup=mechanism_purview_label,
-                        showlegend=True
-                        if mechanism_purview_label not in legend_mechanism_purviews
-                        else False,
-                        x=two_relations_coords[0][r],
-                        y=two_relations_coords[1][r],
-                        z=two_relations_coords[2][r],
-                        mode="lines",
-                        name=mechanism_purview_label,
-                        line_width=two_relations_sizes[r],
-                        line_color=relation_color,
-                        hoverinfo="text",
-                        hovertext=hovertext_relation(relation),
-                    )
+                        edge_purviews_with_mechanisms_two_relation_trace = go.Scatter3d(
+                            visible=show_edges,
+                            legendgroup=mechanism_purview_label,
+                            showlegend=True
+                            if mechanism_purview_label not in legend_mechanism_purviews
+                            else False,
+                            x=two_relations_coords[0][r],
+                            y=two_relations_coords[1][r],
+                            z=two_relations_coords[2][r],
+                            mode="lines",
+                            name=mechanism_purview_label,
+                            line_width=two_relations_sizes[r],
+                            line_color=relation_color,
+                            hoverinfo="text",
+                            hovertext=hovertext_relation(relation),
+                        )
 
-                    fig.add_trace(edge_purviews_with_mechanisms_two_relation_trace)
+                        fig.add_trace(edge_purviews_with_mechanisms_two_relation_trace)
 
-                    if mechanism_purview_label not in legend_mechanism_purviews:
-                        legend_mechanism_purviews.append(mechanism_purview_label)
+                        if mechanism_purview_label not in legend_mechanism_purviews:
+                            legend_mechanism_purviews.append(mechanism_purview_label)
 
                 # Make all 2-relations traces and legendgroup
                 edge_two_relation_trace = go.Scatter3d(
@@ -996,39 +997,40 @@ def plot_ces(
                         legend_relation_purviews.append(purview_label)
 
                 if show_per_mechanism_purview_qfolds:
-                    relatum = relation.relata[0]
-                    purview = relatum.purview
-                    mechanism = relatum.mechanism
-                    direction = str(relatum.direction)
-                    purview_label = make_label(purview, node_labels)
-                    mechanism_label = make_label(mechanism, node_labels)
-                    mechanism_purview_label = f"Mechanism {mechanism_label} {direction} Purview {purview_label} q-fold"
+                    for relatum in relation.relata:
+                    
+                        purview = relatum.purview
+                        mechanism = relatum.mechanism
+                        direction = str(relatum.direction)
+                        purview_label = make_label(purview, node_labels)
+                        mechanism_label = make_label(mechanism, node_labels)
+                        mechanism_purview_label = f"Mechanism {mechanism_label} {direction} Purview {purview_label} q-fold"
 
-                    purviews_with_mechanisms_three_relation_trace = go.Mesh3d(
-                        visible=show_edges,
-                        legendgroup=mechanism_purview_label,
-                        showlegend=True
-                        if mechanism_purview_label not in legend_mechanism_purviews
-                        else False,
-                        x=x,
-                        y=y,
-                        z=z,
-                        i=[i[r]],
-                        j=[j[r]],
-                        k=[k[r]],
-                        intensity=np.linspace(0, 1, len(x), endpoint=True),
-                        opacity=three_relations_sizes[r],
-                        colorscale="viridis",
-                        showscale=False,
-                        name=mechanism_purview_label,
-                        hoverinfo="text",
-                        hovertext=hovertext_relation(relation),
-                    )
+                        purviews_with_mechanisms_three_relation_trace = go.Mesh3d(
+                            visible=show_edges,
+                            legendgroup=mechanism_purview_label,
+                            showlegend=True
+                            if mechanism_purview_label not in legend_mechanism_purviews
+                            else False,
+                            x=x,
+                            y=y,
+                            z=z,
+                            i=[i[r]],
+                            j=[j[r]],
+                            k=[k[r]],
+                            intensity=np.linspace(0, 1, len(x), endpoint=True),
+                            opacity=three_relations_sizes[r],
+                            colorscale="viridis",
+                            showscale=False,
+                            name=mechanism_purview_label,
+                            hoverinfo="text",
+                            hovertext=hovertext_relation(relation),
+                        )
 
-                    fig.add_trace(purviews_with_mechanisms_three_relation_trace)
+                        fig.add_trace(purviews_with_mechanisms_three_relation_trace)
 
-                    if mechanism_purview_label not in legend_mechanism_purviews:
-                        legend_mechanism_purviews.append(mechanism_purview_label)
+                        if mechanism_purview_label not in legend_mechanism_purviews:
+                            legend_mechanism_purviews.append(mechanism_purview_label)
 
                 triangle_three_relation_trace = go.Mesh3d(
                     visible=show_mesh,
