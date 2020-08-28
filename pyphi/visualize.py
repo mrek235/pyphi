@@ -336,7 +336,7 @@ def plot_ces(
     save_coords=False,
     link_width=1.5,
     colorcode_2_relations=True,
-    left_margin=400,
+    left_margin=(get_screen_size()[0]/3.5),
 ):
     # Select only relations <= max_order
     relations = list(filter(lambda r: len(r.relata) <= max_order, relations))
