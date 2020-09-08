@@ -12,22 +12,20 @@ from plotly import express as px
 from plotly import graph_objs as go
 from umap import UMAP
 from tqdm.notebook import tqdm
-
-# import wx
+import wx
 import pickle
 
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout, to_agraph
-
-# from IPython.display import Image
+from IPython.display import Image
 
 from pyphi import relations as rel
 
 
-# def get_screen_size():
-#     app = wx.App(False)
-#     width, height = wx.GetDisplaySize()
-#     return width, height
+def get_screen_size():
+    app = wx.App(False)
+    width, height = wx.GetDisplaySize()
+    return width, height
 
 
 def flatten(iterable):
@@ -297,17 +295,6 @@ def separate_cause_and_effect_for(coords):
     return causes_x, causes_y, effects_x, effects_y
 
 
-def label_to_mechanisms(labels, node_labels):
-    mechanisms = []
-    for label in labels:
-        distinction = tuple()
-        for letter in label:
-            distinction = distinction + (node_labels.index(letter),)
-
-        mechanisms.append(distinction)
-    return mechanisms
-
-
 def plot_ces(
     subsystem,
     ces,
@@ -349,9 +336,7 @@ def plot_ces(
     save_coords=False,
     link_width=1.5,
     colorcode_2_relations=True,
-    # left_margin=(get_screen_size()[0] / 3.5),
-    left_margin=300,
-    show_intersection_of=None,
+    left_margin=(get_screen_size()[0]/3.5),
 ):
     # Select only relations <= max_order
     relations = list(filter(lambda r: len(r.relata) <= max_order, relations))
@@ -627,7 +612,6 @@ def plot_ces(
     legend_purviews = []
     legend_relation_purviews = []
     legend_mechanism_purviews = []
-    legend_intersection = []
 
     # Plot distinction links (edge connecting cause, mechanism, effect vertices)
     coords_links = (
@@ -814,7 +798,7 @@ def plot_ces(
 
                 # Make cause/effect purview per mechanism contexts traces and legendgroups
                 if show_per_mechanism_purview_qfolds:
-
+                    
                     for relatum in relation.relata:
                         purview = relatum.purview
                         mechanism = relatum.mechanism
@@ -844,48 +828,6 @@ def plot_ces(
 
                         if mechanism_purview_label not in legend_mechanism_purviews:
                             legend_mechanism_purviews.append(mechanism_purview_label)
-
-                if show_intersection_of:
-
-                    mechanisms = label_to_mechanisms(show_intersection_of, node_labels)
-
-                    areAllInTheRelation = False
-                    count = 0
-                    intersection_label = ""
-                    for mechanism in mechanisms:
-                        if mechanism in relation.mechanisms:
-                            count += 1
-                            mechanism_label = make_label(mechanism, node_labels)
-                            intersection_label += mechanism_label + " "
-                    if count == len(mechanisms):
-                        areAllInTheRelation = True
-
-                    if areAllInTheRelation:
-                        intersection_label = (
-                            f"Mechanisms {intersection_label} Intersection"
-                        )
-
-                        edge_intersection_trace = go.Scatter3d(
-                            visible=show_edges,
-                            legendgroup=intersection_label,
-                            showlegend=True
-                            if intersection_label not in legend_intersection
-                            else False,
-                            x=two_relations_coords[0][r],
-                            y=two_relations_coords[1][r],
-                            z=two_relations_coords[2][r],
-                            mode="lines",
-                            name=intersection_label,
-                            line_width=two_relations_sizes[r],
-                            line_color=relation_color,
-                            hoverinfo="text",
-                            hovertext=hovertext_relation(relation),
-                        )
-
-                        fig.add_trace(edge_intersection_trace)
-
-                        if intersection_label not in legend_intersection:
-                            legend_intersection.append(intersection_label)
 
                 # Make all 2-relations traces and legendgroup
                 edge_two_relation_trace = go.Scatter3d(
@@ -1056,7 +998,7 @@ def plot_ces(
 
                 if show_per_mechanism_purview_qfolds:
                     for relatum in relation.relata:
-
+                    
                         purview = relatum.purview
                         mechanism = relatum.mechanism
                         direction = str(relatum.direction)
@@ -1089,51 +1031,6 @@ def plot_ces(
 
                         if mechanism_purview_label not in legend_mechanism_purviews:
                             legend_mechanism_purviews.append(mechanism_purview_label)
-
-                if show_intersection_of:
-                    mechanisms = label_to_mechanisms(show_intersection_of, node_labels)
-
-                    areAllInTheRelation = False
-                    count = 0
-                    intersection_label = ""
-                    for mechanism in mechanisms:
-                        if mechanism in relation.mechanisms:
-                            count += 1
-                            mechanism_label = make_label(mechanism, node_labels)
-                            intersection_label += mechanism_label + " "
-                    if count == len(mechanisms):
-                        areAllInTheRelation = True
-
-                    if areAllInTheRelation:
-                        intersection_label = (
-                            f"Mechanisms {intersection_label} Intersection"
-                        )
-
-                        intersection_triangle_trace = go.Mesh3d(
-                            visible=show_edges,
-                            legendgroup=intersection_label,
-                            showlegend=True
-                            if intersection_label not in legend_intersection
-                            else False,
-                            x=x,
-                            y=y,
-                            z=z,
-                            i=[i[r]],
-                            j=[j[r]],
-                            k=[k[r]],
-                            intensity=np.linspace(0, 1, len(x), endpoint=True),
-                            opacity=three_relations_sizes[r],
-                            colorscale="viridis",
-                            showscale=False,
-                            name=intersection_label,
-                            hoverinfo="text",
-                            hovertext=hovertext_relation(relation),
-                        )
-
-                        fig.add_trace(intersection_triangle_trace)
-
-                        if intersection_label not in legend_intersection:
-                            legend_intersection.append(intersection_label)
 
                 triangle_three_relation_trace = go.Mesh3d(
                     visible=show_mesh,
@@ -1196,9 +1093,9 @@ def plot_ces(
                 font=dict(color="black", size=15),
             )
         ),
-        autosize=False,
-        height=plot_dimentions[0],
-        width=plot_dimentions[1],
+        autosize=True,
+        # height=,
+        # width=,
     )
 
     # Apply layout
@@ -1209,7 +1106,7 @@ def plot_ces(
         # TODO check why it doesn't show if you write the img to html
         save_digraph(subsystem, digraph_filename, layout=digraph_layout)
         encoded_image = base64.b64encode(open(digraph_filename, "rb").read())
-        digraph_coords = (0, 1)
+        digraph_coords = (-0.35, 1)
         digraph_size = (0.3, 0.4)
 
         fig.add_layout_image(
