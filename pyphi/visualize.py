@@ -381,7 +381,7 @@ def plot_ces(
     left_margin=300,
     show_intersection_of=None,
 ):
-
+    is_there_higher_relations = False 
     #Selecting relations for intersections of higher order relations between mechanisms
     if show_intersection_of and (len(show_intersection_of) > max_order):
         node_labels = subsystem.node_labels
@@ -986,7 +986,7 @@ def plot_ces(
 
                     if areAllInTheRelation:
                         intersection_label = (
-                            f"Mechanisms {intersection_label} Intersection"
+                            f"Intersection of Mechanisms {intersection_label}"
                         )
 
                         edge_intersection_trace = go.Scatter3d(
@@ -1233,7 +1233,7 @@ def plot_ces(
                             print(f"Intersection of mechanisms {intersection_label} is found.")
                             intersectionCount += 1 
                     if areAllInTheRelation:
-                        intersection_label = f"Mechanisms {intersection_label} Intersection"
+                        intersection_label = f"Intersection of Mechanisms {intersection_label} "
                         
                         intersection_triangle_trace = go.Mesh3d(
                             visible=show_edges,
@@ -1261,8 +1261,7 @@ def plot_ces(
                         if intersection_label not in legend_intersection:
                             legend_intersection.append(intersection_label)
                         
-                        if r == relations[-1] and intersectionCount == 0:
-                            print("The intersection you requested cannot be found.")
+
                         
                     if is_there_higher_relations:
                         mechanism_list = set(intersection_mechanisms)
@@ -1288,14 +1287,10 @@ def plot_ces(
                             plot_relation = True 
 
                         if plot_relation:
-                            print("Das ist ein intersection powerset list" + str(intersection_powerset_list))
-                            print("Das is die relation mechanisms" + str(relation_mechanisms_set))
-                            print(relation)
-                        if plot_relation:
                             intersection_label = ""
                             for mechanism in show_intersection_of:
                                 intersection_label += mechanism + " " 
-                            intersection_label = f"Mechanisms {intersection_label} Intersection" 
+                            intersection_label = f"Intersection of Mechanisms {intersection_label}" 
                             intersection_triangle_trace = go.Mesh3d(
                                 visible=show_edges,
                                 legendgroup=intersection_label,
@@ -1347,7 +1342,8 @@ def plot_ces(
                 fig.add_trace(triangle_three_relation_trace)
 
 
-                
+    if intersectionCount == 0 :
+        print("The intersection you requested cannot be found.")            
 
         # Create figure
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
