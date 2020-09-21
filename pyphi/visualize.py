@@ -12,7 +12,7 @@ from plotly import express as px
 from plotly import graph_objs as go
 from umap import UMAP
 from tqdm.notebook import tqdm
-
+import collections
 # import wx
 import pickle
 import string
@@ -298,7 +298,7 @@ def separate_cause_and_effect_for(coords):
     return causes_x, causes_y, effects_x, effects_y
 
 def label_to_mechanisms(labels, node_labels):
-    mechanisms = []
+    mechanisms = [] 
     for label in labels:
         distinction = tuple()
         for letter in label:
@@ -314,25 +314,31 @@ def label_to_mechanisms(labels, node_labels):
 def is_there_higher_relation(show_intersection_of, higher_relations,node_labels):
     mechanisms = label_to_mechanisms(show_intersection_of, node_labels)
     higher_relation_exists = False
-    for relation in higher_relations:
-        count = 0
-        for mechanism in mechanisms:
-            if mechanism in relation.mechanisms:
-                count += 1
-        if count == len(mechanisms):
-            higher_relation_exists = True
+    mechanisms_are_unique = len(set(mechanisms)) == len(mechanisms)
+    if mechanisms_are_unique:
+        for relation in higher_relations:
+            count = 0
+            for mechanism in mechanisms:
+                if mechanism in relation.mechanisms:
+                    count += 1
+            if count == len(mechanisms):
+                higher_relation_exists = True
+    else:
+        print("The mechanisms you provided are not unique. Intersection will not be checked. Please provide unique mechanisms.")
     return higher_relation_exists
 
-
-def label_to_mechanisms(labels, node_labels):
-    mechanisms = []
-    for label in labels:
-        distinction = tuple()
-        for letter in label:
-            distinction = distinction + (node_labels.index(letter),)
-
-        mechanisms.append(distinction)
-    return mechanisms
+def intersection_indices_to_labels(show_intersection_of, node_labels):
+    labels = []
+    for mechanism in show_intersection_of:
+        node_list = []
+        for node in mechanism:
+            if node == ",":
+                pass
+            else:
+                node_list.append(int(node))        
+        node_tuple = tuple(node_list) 
+        labels.append(make_label(node_tuple,node_labels))
+    return labels    
 
 
 def plot_ces(
@@ -382,18 +388,17 @@ def plot_ces(
     show_intersection_of=None,
 ):
     is_there_higher_relations = False 
+    mechanisms_are_unique = set(show_intersection_of) == show_intersection_of
     #Selecting relations for intersections of higher order relations between mechanisms
     if show_intersection_of and (len(show_intersection_of) > max_order):
         node_labels = subsystem.node_labels
         mechanisms = label_to_mechanisms(show_intersection_of,node_labels)
-        all_relations = list(filter(lambda r: len(r.relata) <= len(show_intersection_of), relations))
-        higher_relations = list(filter(lambda r: len(r.relata) > max_order , all_relations))
+        higher_relations = list(filter(lambda r: len(r.relata) == len(show_intersection_of), relations))
         is_there_higher_relations = is_there_higher_relation(show_intersection_of, higher_relations,node_labels)
         if is_there_higher_relations:
-            print("There is high.")
             powerset_of_relations_of_higher_relation_intersection = list(powerset(mechanisms,nonempty=True))
             three_relations_of_higher_relation_intersection = list(filter(lambda r: len(r) == 3, powerset_of_relations_of_higher_relation_intersection))
-            three_relations_of_higher_relation_intersection = [set(t) for t in three_relations_of_higher_relation_intersection]
+
             
     # Select only relations <= max_order
     relations = list(filter(lambda r: len(r.relata) <= max_order, relations))
@@ -941,7 +946,13 @@ def plot_ces(
                             intersection_label += mechanism_label+" "
                     if count == len(mechanisms):
                         areAllInTheRelation = True
-                        
+                        intersectionCount += 1
+                    
+                    if intersectionCount == 1:
+                            print(f"Intersection of mechanisms {intersection_label} is found.")
+                            intersectionCount += 1 
+
+
                     if areAllInTheRelation:
                         
                         intersection_label = f"Intersection of Mechanisms {intersection_label}"
@@ -1264,33 +1275,23 @@ def plot_ces(
 
                         
                     if is_there_higher_relations:
-                        mechanism_list = set(intersection_mechanisms)
                         intersection_powerset_list = three_relations_of_higher_relation_intersection
                         relation_mechanisms = relation.mechanisms
-                        relation_mechanisms_set = set(relation_mechanisms)
                         
-                       
                         plot_relation = False
-                        
-                        #I don't why this code is like this and neither I understand it or think it is correct.
-                        #for mechanism_list in mechanism_lists:
-                        #    count = 0
-                        #    for relation_mechanism in relation_mechanisms:
-                        #        if relation_mechanism in mechanism_list:
-                        #            count += 1
-                        #        if count == 3:
-                        #            plot_relation = True
-                        
-                        relation_in_list = relation_mechanisms_set in intersection_powerset_list 
                     
-                        if relation_in_list:
-                            plot_relation = True 
-
+                        for intersection_relation in intersection_powerset_list:
+                            if collections.Counter(relation_mechanisms) == collections.Counter(intersection_relation):
+                                plot_relation = True
+                                break
+            
                         if plot_relation:
                             intersection_label = ""
-                            for mechanism in show_intersection_of:
-                                intersection_label += mechanism + " " 
-                            intersection_label = f"Intersection of Mechanisms {intersection_label}" 
+                            labels = intersection_indices_to_labels(show_intersection_of,node_labels)
+                            for label in labels:
+                                intersection_label += label + " "
+                            
+                            intersection_label = f"Intersection of Mechanisms {intersection_label}"
                             intersection_triangle_trace = go.Mesh3d(
                                 visible=show_edges,
                                 legendgroup=intersection_label,
@@ -1315,6 +1316,7 @@ def plot_ces(
                             fig.add_trace(intersection_triangle_trace)
                             
                             if intersection_label not in legend_intersection:
+                                print(intersection_label)
                                 legend_intersection.append(intersection_label)
                     
 
@@ -1342,8 +1344,8 @@ def plot_ces(
                 fig.add_trace(triangle_three_relation_trace)
 
 
-    if intersectionCount == 0 :
-        print("The intersection you requested cannot be found.")            
+        if intersectionCount == 0 and mechanisms_are_unique :
+            print("The intersection you requested cannot be found.")            
 
         # Create figure
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
