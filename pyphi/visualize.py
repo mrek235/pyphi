@@ -388,7 +388,9 @@ def plot_ces(
     show_intersection_of=None,
 ):
     is_there_higher_relations = False 
-    mechanisms_are_unique = set(show_intersection_of) == show_intersection_of
+   
+    if show_intersection_of:
+        mechanisms_are_unique = set(show_intersection_of) == show_intersection_of
     #Selecting relations for intersections of higher order relations between mechanisms
     if show_intersection_of and (len(show_intersection_of) > max_order):
         node_labels = subsystem.node_labels
