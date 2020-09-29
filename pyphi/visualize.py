@@ -1345,9 +1345,9 @@ def plot_ces(
                 )
                 fig.add_trace(triangle_three_relation_trace)
 
-
-        if intersectionCount == 0 and mechanisms_are_unique :
-            print("The intersection you requested cannot be found.")            
+        if show_intersection_of:
+            if intersectionCount == 0 and mechanisms_are_unique :
+                print("The intersection you requested cannot be found.")            
 
         # Create figure
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
