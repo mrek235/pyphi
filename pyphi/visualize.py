@@ -19,17 +19,23 @@ import string
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout, to_agraph
 from pyphi import relations as rel
-from pyphi.utils import powerset 
+from pyphi.utils import powerset
 
 import tkinter as tk
+import os
+
 
 def get_screen_size():
-    root = tk.Tk()
+    havedisplay = "DISPLAY" in os.environ
+    if not havedisplay:
+        return 1920, 1080
+    else:
+        root = tk.Tk()
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        return screen_width, screen_height
 
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-    return screen_width,screen_height
-    
+
 def flatten(iterable):
     return itertools.chain.from_iterable(iterable)
 
@@ -296,11 +302,12 @@ def separate_cause_and_effect_for(coords):
 
     return causes_x, causes_y, effects_x, effects_y
 
+
 def label_to_mechanisms(labels, node_labels):
-    mechanisms = [] 
+    mechanisms = []
     for label in labels:
-        isString = isinstance(label,str)
-        isTuple = isinstance(label,tuple)
+        isString = isinstance(label, str)
+        isTuple = isinstance(label, tuple)
         if isString:
             distinction = tuple()
             for letter in label:
@@ -311,11 +318,12 @@ def label_to_mechanisms(labels, node_labels):
                 else:
                     distinction = distinction + (node_labels.index(letter),)
         if isTuple:
-            distinction = label    
+            distinction = label
         mechanisms.append(distinction)
     return mechanisms
 
-def is_there_higher_relation(show_intersection_of, higher_relations,node_labels):
+
+def is_there_higher_relation(show_intersection_of, higher_relations, node_labels):
     mechanisms = label_to_mechanisms(show_intersection_of, node_labels)
     higher_relation_exists = False
     mechanisms_are_unique = len(set(mechanisms)) == len(mechanisms)
@@ -328,30 +336,33 @@ def is_there_higher_relation(show_intersection_of, higher_relations,node_labels)
             if count == len(mechanisms):
                 higher_relation_exists = True
     else:
-        print("The mechanisms you provided are not unique. Intersection will not be checked. Please provide unique mechanisms.")
+        print(
+            "The mechanisms you provided are not unique. Intersection will not be checked. Please provide unique mechanisms."
+        )
     print("There is high")
     return higher_relation_exists
+
 
 def intersection_indices_to_labels(show_intersection_of, node_labels):
     labels = []
     for mechanism in show_intersection_of:
-        isString = isinstance(mechanism,str)
-        isTuple =  isinstance(mechanism,tuple)
-        
+        isString = isinstance(mechanism, str)
+        isTuple = isinstance(mechanism, tuple)
+
         if isString:
             node_list = []
             for node in mechanism:
                 if node == ",":
                     pass
                 else:
-                    node_list.append(int(node))        
-            node_tuple = tuple(node_list) 
-            labels.append(make_label(node_tuple,node_labels))
+                    node_list.append(int(node))
+            node_tuple = tuple(node_list)
+            labels.append(make_label(node_tuple, node_labels))
         elif isTuple:
-            labels.append(make_label(mechanism,node_labels))
+            labels.append(make_label(mechanism, node_labels))
         else:
             print("Please provide integer tuples or strings of mechanisms.")
-    return labels    
+    return labels
 
 
 def plot_ces(
@@ -395,12 +406,12 @@ def plot_ces(
     save_coords=False,
     link_width=1.5,
     colorcode_2_relations=True,
-    left_margin=get_screen_size()[0]/10,    
+    left_margin=get_screen_size()[0] / 10,
 ):
-            
+
     # Select only relations <= max_order
     relations = list(filter(lambda r: len(r.relata) <= max_order, relations))
-    
+
     # Separate CES into causes and effects
     separated_ces = rel.separate_ces(ces)
 
@@ -675,7 +686,7 @@ def plot_ces(
     legend_mechanism_purviews = []
     legend_intersection = []
 
-    intersectionCount = 0 #A flag and a counter for the times there is a check for intersection and it is found.
+    intersectionCount = 0  # A flag and a counter for the times there is a check for intersection and it is found.
     # Plot distinction links (edge connecting cause, mechanism, effect vertices)
     coords_links = (
         list(zip(x, flatten(list(zip(xm, xm))))),
@@ -736,7 +747,7 @@ def plot_ces(
                 list(chunk_list(list(edges["x"]), 2)),
                 list(chunk_list(list(edges["y"]), 2)),
                 list(chunk_list(list(edges["z"]), 2)),
-            ]        
+            ]
 
             for r, relation in tqdm(
                 enumerate(two_relations),
@@ -891,8 +902,7 @@ def plot_ces(
 
                         if mechanism_purview_label not in legend_mechanism_purviews:
                             legend_mechanism_purviews.append(mechanism_purview_label)
-                
-                   
+
                 # Make all 2-relations traces and legendgroup
                 edge_two_relation_trace = go.Scatter3d(
                     visible=show_edges,
@@ -1096,8 +1106,6 @@ def plot_ces(
                         if mechanism_purview_label not in legend_mechanism_purviews:
                             legend_mechanism_purviews.append(mechanism_purview_label)
 
-                    
-
                 triangle_three_relation_trace = go.Mesh3d(
                     visible=show_mesh,
                     legendgroup="All 3-Relations",
@@ -1119,7 +1127,7 @@ def plot_ces(
                     hoverinfo="text",
                     hovertext=hovertext_relation(relation),
                 )
-                fig.add_trace(triangle_three_relation_trace)            
+                fig.add_trace(triangle_three_relation_trace)
 
         # Create figure
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1160,8 +1168,8 @@ def plot_ces(
             )
         ),
         autosize=True,
-        #height=plot_dimentions[0],
-        #width=plot_dimentions[1],
+        # height=plot_dimentions[0],
+        # width=plot_dimentions[1],
     )
 
     # Apply layout
