@@ -343,7 +343,11 @@ def intersection_indices_to_labels(show_intersection_of, node_labels):
     for mechanism in show_intersection_of:
         isString = isinstance(mechanism,str)
         isTuple =  isinstance(mechanism,tuple)
+        isInt = isinstance(mechanism,int)
         
+        if isInt:
+            mechanism = (mechanism,)
+            isTuple = True
         if isString:
             node_list = []
             for node in mechanism:
@@ -386,7 +390,7 @@ def plot_node_qfolds2D(r,relation,node_indices,node_labels,go,show_edges,legend_
                             if node not in legend_nodes:
 
                                 legend_nodes.append(node)
-                            return legend_nodes
+                            
 
 def plot_node_qfolds3D(r,relation,show_mesh,node_labels,go,fig,legend_mechanisms,x,y,z,i,j,k,three_relations_sizes):
                     
@@ -419,7 +423,7 @@ def plot_node_qfolds3D(r,relation,show_mesh,node_labels,go,fig,legend_mechanisms
                             if node not in legend_nodes:
 
                                 legend_nodes.append(node)
-                    return legend_nodes
+                    
 
 def plot_mechanism_qfolds2D(r,relation,ces,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_mechanisms,relation_color):
                     mechanisms_list = [distinction.mechanism for distinction in ces]
@@ -449,8 +453,8 @@ def plot_mechanism_qfolds2D(r,relation,ces,show_edges,node_labels,go,fig,two_rel
                             if mechanism_label not in legend_mechanisms:
 
                                 legend_mechanisms.append(mechanism_label)
-                        
-                            return legend_mechanisms
+                            
+                            
 
 
 def plot_mechanism_qfolds3D(r,relation,ces,show_mesh,node_labels,go,fig,legend_mechanisms,x,y,z,i,j,k,three_relations_sizes):
@@ -485,7 +489,8 @@ def plot_mechanism_qfolds3D(r,relation,ces,show_mesh,node_labels,go,fig,legend_m
                             fig.add_trace(triangle_three_relation_trace)
                             if mechanism_label not in legend_mechanisms:
                                 legend_mechanisms.append(mechanism_label)
-                            return legend_mechanisms
+                            
+                            
 
 def plot_relation_purview_qfolds2D(r,relation,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_relation_purviews,relation_color):
                         purview = relation.purview
@@ -513,7 +518,7 @@ def plot_relation_purview_qfolds2D(r,relation,show_edges,node_labels,go,fig,two_
                         if purview_label not in legend_relation_purviews:
                             legend_relation_purviews.append(purview_label)
                         
-                        return legend_relation_purviews
+                        
                     
 def plot_relation_purview_qfolds3D(r,relation,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_relation_purviews,relation_color,x,y,z,i,j,k,three_relations_sizes):
                     
@@ -546,7 +551,7 @@ def plot_relation_purview_qfolds3D(r,relation,show_edges,node_labels,go,fig,two_
                     if purview_label not in legend_relation_purviews:
                         legend_relation_purviews.append(purview_label)
                     
-                    return legend_relation_purviews
+                    
         
 def plot_per_mechanism_purview_qfolds2D(r,relation,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_mechanism_purviews,relation_color):
                     for relatum in relation.relata:
@@ -579,7 +584,7 @@ def plot_per_mechanism_purview_qfolds2D(r,relation,show_edges,node_labels,go,fig
                         if mechanism_purview_label not in legend_mechanism_purviews:
                             legend_mechanism_purviews.append(mechanism_purview_label)
                     
-                    return legend_mechanism_purviews
+                    
                     
                     
                     
@@ -620,7 +625,7 @@ def plot_per_mechanism_purview_qfolds3D(r,relation,show_edges,node_labels,go,fig
                         if mechanism_purview_label not in legend_mechanism_purviews:
                             legend_mechanism_purviews.append(mechanism_purview_label)
                         
-                    return legend_mechanism_purviews
+                    
             
 def plot_compound_purview_qfolds2D(r,relation,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_compound_purviews,relation_color):
                         
@@ -651,7 +656,7 @@ def plot_compound_purview_qfolds2D(r,relation,show_edges,node_labels,go,fig,two_
                         if purview_label not in legend_compound_purviews:
                             legend_compound_purviews.append(purview_label)
                         
-                        return legend_compound_purviews
+                        
 
 def plot_compound_purview_qfolds3D(r,relation,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_compound_purviews,relation_color,x,y,z,i,j,k,three_relations_sizes): 
 
@@ -686,7 +691,7 @@ def plot_compound_purview_qfolds3D(r,relation,show_edges,node_labels,go,fig,two_
 
                         if purview_label not in legend_compound_purviews:
                             legend_compound_purviews.append(purview_label)
-                        return legend_compound_purviews
+                       
 
 def plot_ces(
     subsystem,
@@ -717,6 +722,7 @@ def plot_ces(
     show_compound_purview_qfolds=True,
     show_relation_purview_qfolds=True,
     show_per_mechanism_purview_qfolds=True,
+    show_intersection = "legendonly",
     show_grid=False,
     network_name="",
     eye_coordinates=(0.3, 0.3, 0.3),
@@ -740,6 +746,12 @@ def plot_ces(
 
     # Initialize figure
     fig = go.Figure()
+    
+    if show_intersection != None and len(show_intersection) > 3:
+        print("We cannot show intersections of more than three mechanisms right now.")
+        show_intersection = False
+    if len(show_intersection) != len(set(show_intersection)):
+        print("The mechanisms you provided are not unique. Intersection will not be checked. Please provide unique mechanisms.")
 
     # Dimensionality reduction
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1082,32 +1094,64 @@ def plot_ces(
 
                 # Make node contexts traces and legendgroups
                 if show_node_qfolds:
-                        legend_nodes = plot_node_qfolds2D(r,relation,node_indices,node_labels,go,show_edges,legend_nodes,two_relations_coords,two_relations_sizes,relation_color)
+                    plot_node_qfolds2D(r,relation,node_indices,node_labels,go,show_edges,legend_nodes,two_relations_coords,two_relations_sizes,relation_color)
 
                 # Make nechanism contexts traces and legendgroups
                 if show_mechanism_qfolds:
                     
-                    legend_mechanisms = plot_mechanism_qfolds2D(r,relation,ces,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_mechanisms,relation_color)
+                    plot_mechanism_qfolds2D(r,relation,ces,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_mechanisms,relation_color)
+                    
 
                 # Make compound purview contexts traces and legendgroups
                 if show_compound_purview_qfolds:
                                         
-                    legend_compound_purviews = plot_compound_purview_qfolds2D(r,relation,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_compound_purviews,relation_color)
+                    plot_compound_purview_qfolds2D(r,relation,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_compound_purviews,relation_color)
 
                 # Make relation purview contexts traces and legendgroups
                 
                 #For plotting Relation Purview Q-Folds, which are the relations over a certain purview, regardless of the mechanism.
                 if show_relation_purview_qfolds:
                     
-                    legend_relation_purviews = plot_relation_purview_qfolds2D(r,relation,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_relation_purviews,relation_color)
+                    plot_relation_purview_qfolds2D(r,relation,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_relation_purviews,relation_color)
                     
 
                 # Make cause/effect purview per mechanism contexts traces and legendgroups
                 if show_per_mechanism_purview_qfolds:
                         
-                        legend_mechanism_purviews = plot_per_mechanism_purview_qfolds2D(r,relation,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_mechanism_purviews,relation_color)
+                    plot_per_mechanism_purview_qfolds2D(r,relation,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_mechanism_purviews,relation_color)
                         
-                
+                #working on intersections using plot_mechanism
+                if show_intersection:
+                    intersection_list = label_to_mechanisms(show_intersection, node_labels)
+                    intersection_label = ""
+                    intersection_label_list = intersection_indices_to_labels(show_intersection, node_labels)
+                    for label in intersection_label_list:
+                        intersection_label = intersection_label + str(label) + " "
+                    if all(x in relation.mechanisms for x in intersection_list):
+                            edge_two_relation_trace = go.Scatter3d(
+                                visible=show_edges,
+                                legendgroup=f"Intersection {intersection_label}q-fold",
+                                showlegend=True
+                                if intersection_label not in legend_intersection
+                                else False,
+                                x=two_relations_coords[0][r],
+                                y=two_relations_coords[1][r],
+                                z=two_relations_coords[2][r],
+                                mode="lines",
+                                name=f"Intersection {intersection_label}q-fold",
+                                line_width=two_relations_sizes[r],
+                                line_color=relation_color,
+                                hoverinfo="text",
+                                hovertext=hovertext_relation(relation),
+                            )
+
+                            fig.add_trace(edge_two_relation_trace)
+
+                            if intersection_label not in legend_intersection:
+
+                                legend_intersection.append(intersection_label)
+                    
+                    
                    
                 # Make all 2-relations traces and legendgroup
                 edge_two_relation_trace = go.Scatter3d(
@@ -1127,6 +1171,8 @@ def plot_ces(
                 )
 
                 fig.add_trace(edge_two_relation_trace)
+                
+            
 
     # 3-relations
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1153,25 +1199,57 @@ def plot_ces(
 
                 if show_node_qfolds:
                     
-                    legend_nodes = plot_node_qfolds3D(r,relation,show_mesh,node_labels,go,fig,legend_nodes,x,y,z,i,j,k,three_relations_sizes)
+                    plot_node_qfolds3D(r,relation,show_mesh,node_labels,go,fig,legend_nodes,x,y,z,i,j,k,three_relations_sizes)
 
                 if show_mechanism_qfolds:
                         
-                    legend_mechanisms = plot_mechanism_qfolds3D(r,relation,ces,show_mesh,node_labels,go,fig,legend_mechanisms,x,y,z,i,j,k,three_relations_sizes)
+                    plot_mechanism_qfolds3D(r,relation,ces,show_mesh,node_labels,go,fig,legend_mechanisms,x,y,z,i,j,k,three_relations_sizes)
 
                 if show_compound_purview_qfolds:
-                                               
-                    legend_compound_purviews = plot_compound_purview_qfolds3D(r,relation,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_compound_purviews,relation_color,x,y,z,i,j,k,three_relations_sizes)
+                    plot_compound_purview_qfolds3D(r,relation,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_compound_purviews,relation_color,x,y,z,i,j,k,three_relations_sizes)
 
                 if show_relation_purview_qfolds:
-                    
-                    legend_relation_purviews= plot_relation_purview_qfolds3D(r,relation,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_relation_purviews,relation_color,x,y,z,i,j,k,three_relations_sizes)
+                    plot_relation_purview_qfolds3D(r,relation,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_relation_purviews,relation_color,x,y,z,i,j,k,three_relations_sizes)
             
 
                 if show_per_mechanism_purview_qfolds:
-                    legend_mechanism_purviews=plot_per_mechanism_purview_qfolds3D(r,relation,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_mechanism_purviews,relation_color,x,y,z,i,j,k,three_relations_sizes)
+                    plot_per_mechanism_purview_qfolds3D(r,relation,show_edges,node_labels,go,fig,two_relations_coords,two_relations_sizes,legend_mechanism_purviews,relation_color,x,y,z,i,j,k,three_relations_sizes)
 
-                                            
+                if show_intersection:
+                    intersection_list = label_to_mechanisms(show_intersection, node_labels)
+                    intersection_label = ""
+                    intersection_label_list = intersection_indices_to_labels(show_intersection, node_labels)
+                    for label in intersection_label_list:
+                        intersection_label = intersection_label + str(label) + " "
+                    if all(x in relation.mechanisms for x in intersection_list):
+                            triangle_three_relation_trace = go.Mesh3d(
+                                visible=show_mesh,
+                                legendgroup=f"Intersection {intersection_label}q-fold",
+                                showlegend=True
+                                if intersection_label not in legend_intersection
+                                else False,
+                                # x, y, and z are the coordinates of vertices
+                                x=x,
+                                y=y,
+                                z=z,
+                                # i, j, and k are the vertices of triangles
+                                i=[i[r]],
+                                j=[j[r]],
+                                k=[k[r]],
+                                # Intensity of each vertex, which will be interpolated and color-coded
+                                intensity=np.linspace(0, 1, len(x), endpoint=True),
+                                opacity=three_relations_sizes[r],
+                                colorscale="viridis",
+                                showscale=False,
+                                name=f"Intersection {intersection_label}q-fold",
+                                hoverinfo="text",
+                                hovertext=hovertext_relation(relation),
+                            )
+                            fig.add_trace(triangle_three_relation_trace)
+
+                            if intersection_label not in legend_intersection:
+
+                                legend_intersection.append(intersection_label)                            
                 triangle_three_relation_trace = go.Mesh3d(
                     visible=show_mesh,
                     legendgroup="All 3-Relations",
@@ -1197,6 +1275,11 @@ def plot_ces(
 
         # Create figure
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    
+    if show_intersection != False and len(legend_intersection) == 0:
+        print("The intersection you requested cannot be found.")
+    
+        
     axes_range = [(min(d) - 1, max(d) + 1) for d in (x, y, z)]
 
     axes = [
@@ -1287,4 +1370,8 @@ def plot_ces(
 
     if save_plot_to_html:
         plotly.io.write_html(fig, f"{network_name}_CES.html")
+
+    
+     
     return fig
+
