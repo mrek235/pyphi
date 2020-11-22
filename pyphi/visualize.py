@@ -307,6 +307,10 @@ def label_to_mechanisms(labels, node_labels):
     for label in labels:
         isString = isinstance(label,str)
         isTuple = isinstance(label,tuple)
+        isInt = isinstance(label,int)
+        if isInt:
+            label = (label,)
+            isTuple = True
         if isString:
             distinction = tuple()
             for letter in label:
@@ -722,7 +726,7 @@ def plot_ces(
     show_compound_purview_qfolds=True,
     show_relation_purview_qfolds=True,
     show_per_mechanism_purview_qfolds=True,
-    show_intersection = "legendonly",
+    show_intersection = None,
     show_grid=False,
     network_name="",
     eye_coordinates=(0.3, 0.3, 0.3),
@@ -747,12 +751,13 @@ def plot_ces(
     # Initialize figure
     fig = go.Figure()
     
-    if show_intersection != None and len(show_intersection) > 3:
-        print("We cannot show intersections of more than three mechanisms right now.")
-        show_intersection = False
-    if len(show_intersection) != len(set(show_intersection)):
-        print("The mechanisms you provided are not unique. Intersection will not be checked. Please provide unique mechanisms.")
-
+    if show_intersection != None:
+        if len(show_intersection) > 3:
+            print("We cannot show intersections of more than three mechanisms right now.")
+            show_intersection = None
+        if len(show_intersection) != len(set(show_intersection)):
+            print("The mechanisms you provided are not unique. Intersection will not be checked. Please provide unique mechanisms.")
+            show_intersection = None
     # Dimensionality reduction
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Create the features for each cause/effect based on their relations
@@ -1128,6 +1133,7 @@ def plot_ces(
                     for label in intersection_label_list:
                         intersection_label = intersection_label + str(label) + " "
                     if all(x in relation.mechanisms for x in intersection_list):
+                            
                             edge_two_relation_trace = go.Scatter3d(
                                 visible=show_edges,
                                 legendgroup=f"Intersection {intersection_label}q-fold",
@@ -1222,6 +1228,7 @@ def plot_ces(
                     for label in intersection_label_list:
                         intersection_label = intersection_label + str(label) + " "
                     if all(x in relation.mechanisms for x in intersection_list):
+                   
                             triangle_three_relation_trace = go.Mesh3d(
                                 visible=show_mesh,
                                 legendgroup=f"Intersection {intersection_label}q-fold",
@@ -1271,12 +1278,12 @@ def plot_ces(
                     hoverinfo="text",
                     hovertext=hovertext_relation(relation),
                 )
-                fig.add_trace(triangle_three_relation_trace)            
+                fig.add_trace(triangle_three_relation_trace)
 
         # Create figure
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
-    if show_intersection != False and len(legend_intersection) == 0:
+    if show_intersection != None and len(legend_intersection) == 0:
         print("The intersection you requested cannot be found.")
     
         
