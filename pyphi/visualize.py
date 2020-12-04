@@ -325,8 +325,9 @@ def label_to_mechanisms(labels, node_labels):
         mechanisms.append(distinction)
     return mechanisms
 
-def is_there_higher_relation(show_intersection_of, higher_relations,node_labels):
-    mechanisms = label_to_mechanisms(show_intersection_of, node_labels)
+#Finds if there are relations with higher order which include the given mechanisms
+def is_there_any_higher_relation(show_intersection, higher_relations,node_labels):
+    mechanisms = label_to_mechanisms(show_intersection, node_labels)
     higher_relation_exists = False
     mechanisms_are_unique = len(set(mechanisms)) == len(mechanisms)
     if mechanisms_are_unique:
@@ -741,7 +742,21 @@ def plot_ces(
     colorcode_2_relations=True,
     left_margin=get_screen_size()[0]/10,    
 ):
-            
+    
+    
+    higher_relations_exist = 0
+    if show_intersection != None:
+        if len(show_intersection) > 3:
+            higher_relations = list(filter(lambda r: len(r.relata) > 3, relations))
+            higher_relations_exist = is_there_any_higher_relation(show_intersection, higher_relations,subsystem.node_labels)   
+        #if len(show_intersection) > 3:
+        #   print("We cannot show intersections of more than three mechanisms right now.")
+        #   show_intersection = None
+        if len(show_intersection) != len(set(show_intersection)):
+            print("The mechanisms you provided are not unique. Intersection will not be checked. Please provide unique mechanisms.")
+            show_intersection = None
+        
+        
     # Select only relations <= max_order
     relations = list(filter(lambda r: len(r.relata) <= max_order, relations))
     
@@ -751,13 +766,7 @@ def plot_ces(
     # Initialize figure
     fig = go.Figure()
     
-    if show_intersection != None:
-        if len(show_intersection) > 3:
-            print("We cannot show intersections of more than three mechanisms right now.")
-            show_intersection = None
-        if len(show_intersection) != len(set(show_intersection)):
-            print("The mechanisms you provided are not unique. Intersection will not be checked. Please provide unique mechanisms.")
-            show_intersection = None
+    
     # Dimensionality reduction
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Create the features for each cause/effect based on their relations
@@ -1253,10 +1262,48 @@ def plot_ces(
                                 hovertext=hovertext_relation(relation),
                             )
                             fig.add_trace(triangle_three_relation_trace)
+                        
+                            if intersection_label not in legend_intersection:
+
+                                legend_intersection.append(intersection_label)
+                    
+                    
+                        
+                    if higher_relations_exist:
+                        
+                        if all(x in intersection_list for x in relation.mechanisms):
+                   
+                            triangle_three_relation_trace = go.Mesh3d(
+                                    visible=show_mesh,
+                                    legendgroup=f"Intersection {intersection_label}q-fold",
+                                    showlegend=True
+                                    if intersection_label not in legend_intersection
+                                    else False,
+                                    # x, y, and z are the coordinates of vertices
+                                    x=x,
+                                    y=y,
+                                    z=z,
+                                    # i, j, and k are the vertices of triangles
+                                    i=[i[r]],
+                                    j=[j[r]],
+                                    k=[k[r]],
+                                    # Intensity of each vertex, which will be interpolated and color-coded
+                                    intensity=np.linspace(0, 1, len(x), endpoint=True),
+                                    opacity=three_relations_sizes[r],
+                                    colorscale="viridis",
+                                    showscale=False,
+                                    name=f"Intersection {intersection_label}q-fold",
+                                    hoverinfo="text",
+                                    hovertext=hovertext_relation(relation),
+                                )
+                            fig.add_trace(triangle_three_relation_trace)
 
                             if intersection_label not in legend_intersection:
 
-                                legend_intersection.append(intersection_label)                            
+                                legend_intersection.append(intersection_label)
+                
+                    
+                    
                 triangle_three_relation_trace = go.Mesh3d(
                     visible=show_mesh,
                     legendgroup="All 3-Relations",
