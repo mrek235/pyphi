@@ -1138,7 +1138,7 @@ def plot_ces(
                 if show_intersection:
                     intersection_list = label_to_mechanisms(show_intersection, node_labels)
                     intersection_label = ""
-                    intersection_label_list = intersection_indices_to_labels(show_intersection, node_labels)
+                    intersection_label_list = intersection_indices_to_labels(intersection_list, node_labels)
                     for label in intersection_label_list:
                         intersection_label = intersection_label + str(label) + " "
                     if all(x in relation.mechanisms for x in intersection_list):
@@ -1233,7 +1233,7 @@ def plot_ces(
                 if show_intersection:
                     intersection_list = label_to_mechanisms(show_intersection, node_labels)
                     intersection_label = ""
-                    intersection_label_list = intersection_indices_to_labels(show_intersection, node_labels)
+                    intersection_label_list = intersection_indices_to_labels(intersection_list, node_labels)
                     for label in intersection_label_list:
                         intersection_label = intersection_label + str(label) + " "
                     if all(x in relation.mechanisms for x in intersection_list):
